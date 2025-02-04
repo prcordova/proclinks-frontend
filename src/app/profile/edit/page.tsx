@@ -236,25 +236,61 @@ export default function EditLinksPage() {
   const handleAddLink = async () => {
     try {
       setLoading(true)
-      const createdLink = await linkApi.create({
+      
+      // Validar dados do novo link
+      if (!newLink.title || !newLink.url) {
+        setAlert({
+          open: true,
+          message: 'Título e URL são obrigatórios',
+          severity: 'error'
+        })
+        return
+      }
+
+      // Usar o método createLink do linkApi
+      const response = await linkApi.createLink({
         title: newLink.title,
         url: newLink.url,
-        visible: newLink.visible
+        isPublic: newLink.visible
       })
 
-      // Atualiza os estados com o novo link
-      setLinks(prev => [...prev, createdLink])
-      setPendingLinks(prev => [...prev, createdLink])
-      
-      // Limpa o formulário e fecha o modal
-      setNewLink({ title: '', url: '', visible: true })
-      setOpenNewLinkDialog(false)
-      setError('')
-      setAlert({ open: true, message: 'Link adicionado com sucesso', severity: 'success' })
-    } catch (err) {
-      console.error('Erro ao criar link:', err)
-      setError('Erro ao criar link. Tente novamente.')
-      setAlert({ open: true, message: 'Erro ao adicionar link', severity: 'error' })
+      if (response) {
+        // Formatar o novo link para o formato esperado
+        const createdLink: LinkItem = {
+          id: response._id,
+          title: response.title,
+          url: response.url,
+          visible: response.isPublic,
+          createdAt: response.createdAt,
+          order: response.order || 0,
+          likes: response.likes || 0
+        }
+
+        // Atualizar os estados
+        setLinks(prev => [...prev, createdLink])
+        setPendingLinks(prev => [...prev, createdLink])
+        
+        // Limpar o formulário e fechar o modal
+        setNewLink({ title: '', url: '', visible: true })
+        setOpenNewLinkDialog(false)
+        
+        // Mostrar mensagem de sucesso
+        setAlert({
+          open: true,
+          message: 'Link adicionado com sucesso',
+          severity: 'success'
+        })
+        
+        // Indicar que há mudanças não salvas
+        setHasChanges(true)
+      }
+    } catch (error) {
+      console.error('Erro ao criar link:', error)
+      setAlert({
+        open: true,
+        message: 'Erro ao adicionar link',
+        severity: 'error'
+      })
     } finally {
       setLoading(false)
     }
@@ -382,20 +418,35 @@ export default function EditLinksPage() {
     if (!deleteDialog.linkId) return
 
     try {
-      setLoading(true)
-      const response = await linkApi.delete(deleteDialog.linkId)
-      if (response.success) {
-        setLinks(links.filter(link => link.id !== deleteDialog.linkId))
-        setPendingLinks(prev => prev.filter(link => link.id !== deleteDialog.linkId))
-        showAlert('Link excluído com sucesso', 'success')
-      }
-    } catch (error) {
-      console.error('Erro ao deletar link:', error)
-      setError('Erro ao deletar link. Tente novamente.')
-      showAlert('Erro ao excluir link', 'error')
-    } finally {
-      setLoading(false)
+      setIsDeleting(true)
+      await linkApi.deleteLink(deleteDialog.linkId)
+
+      // Atualizar a lista de links
+      const updatedLinks = links.filter(link => link.id !== deleteDialog.linkId)
+      setLinks(updatedLinks)
+      setPendingLinks(updatedLinks)
+      
+      // Fechar o modal
       closeDeleteDialog()
+      
+      // Mostrar mensagem de sucesso
+      setAlert({
+        open: true,
+        message: 'Link excluído com sucesso',
+        severity: 'success'
+      })
+
+      // Indicar que há mudanças não salvas
+      setHasChanges(true)
+    } catch (error) {
+      console.error('Erro ao excluir link:', error)
+      setAlert({
+        open: true,
+        message: 'Erro ao excluir link',
+        severity: 'error'
+      })
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -680,116 +731,146 @@ export default function EditLinksPage() {
 
         {tab === 0 && (
           <Box>
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Ordenação
-                </Typography>
-                
-                <ToggleButtonGroup
-                  value={settings.sortMode}
-                  exclusive
-                  onChange={(_, mode) => handleSortModeChange(mode)}
-                  aria-label="ordenação"
-                >
-                  <ToggleButton value="custom" aria-label="personalizada">
-                    <DragIcon sx={{ mr: 1 }} />
-                    Personalizada
-                  </ToggleButton>
-                  <ToggleButton value="date" aria-label="data">
-                    <SortIcon sx={{ mr: 1 }} />
-                    Data
-                  </ToggleButton>
-                  <ToggleButton value="name" aria-label="nome">
-                    <SortIcon sx={{ mr: 1 }} />
-                    Nome
-                  </ToggleButton>
-                  <ToggleButton value="likes" aria-label="curtidas">
-                    <SortIcon sx={{ mr: 1 }} />
-                    Curtidas
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              </CardContent>
-            </Card>
-
-            <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="h5">Gerenciar Links ({pendingLinks.length})</Typography>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => setOpenNewLinkDialog(true)}
+            {links.length === 0 ? (
+              <Box 
+                sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '200px',
+                  gap: 2,
+                  textAlign: 'center'
+                }}
               >
-                Adicionar Link
-              </Button>
-            </Box>
-
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {pendingLinks.map((link, index) => (
-                <Card 
-                  key={link.id}
-                  sx={{ 
-                    mb: 2,
-                    opacity: draggedIndex === index ? 0.5 : 1,
-                    transition: 'all 0.2s',
-                    cursor: 'move',
-                    '&:hover': {
-                      bgcolor: 'action.hover'
-                    }
-                  }}
-                  onDragStart={() => handleDragStart(index)}
-                  onDragEnter={() => handleDragEnter(index)}
-                  onDragEnd={handleDragEnd}
-                  onDragOver={(e) => e.preventDefault()}
-                  draggable
+                <Typography variant="h6" color="text.secondary">
+                  Você ainda não possui nenhum link
+                </Typography>
+                <Typography color="text.secondary">
+                  Clique no botão abaixo para adicionar seu primeiro link
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => setOpenNewLinkDialog(true)}
                 >
+                  Adicionar Link
+                </Button>
+              </Box>
+            ) : (
+              <Box>
+                <Card sx={{ mb: 3 }}>
                   <CardContent>
-                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                      <DragIcon 
-                        sx={{ 
-                          cursor: 'grab',
-                          '&:active': { cursor: 'grabbing' }
-                        }} 
-                      />
-                      
-                      <TextField
-                        label="Título"
-                        value={link.title}
-                        onChange={(e) => handleUpdateLink(link.id, { title: e.target.value })}
-                        size="small"
-                        sx={{ flexGrow: 1 }}
-                      />
-                      
-                      <TextField
-                        label="URL"
-                        value={link.url}
-                        onChange={(e) => handleUpdateLink(link.id, { url: e.target.value })}
-                        size="small"
-                        sx={{ flexGrow: 2 }}
-                      />
-                      
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={link.visible}
-                            onChange={() => {
-                              handleUpdateLink(link.id, { visible: !link.visible })
-                            }}
-                          />
-                        }
-                        label="Visível"
-                      />
-                      
-                      <IconButton 
-                        onClick={() => openDeleteDialog(link.id)}
-                        color="error"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
+                    <Typography variant="h6" gutterBottom>
+                      Ordenação
+                    </Typography>
+                    
+                    <ToggleButtonGroup
+                      value={settings.sortMode}
+                      exclusive
+                      onChange={(_, mode) => handleSortModeChange(mode)}
+                      aria-label="ordenação"
+                    >
+                      <ToggleButton value="custom" aria-label="personalizada">
+                        <DragIcon sx={{ mr: 1 }} />
+                        Personalizada
+                      </ToggleButton>
+                      <ToggleButton value="date" aria-label="data">
+                        <SortIcon sx={{ mr: 1 }} />
+                        Data
+                      </ToggleButton>
+                      <ToggleButton value="name" aria-label="nome">
+                        <SortIcon sx={{ mr: 1 }} />
+                        Nome
+                      </ToggleButton>
+                      <ToggleButton value="likes" aria-label="curtidas">
+                        <SortIcon sx={{ mr: 1 }} />
+                        Curtidas
+                      </ToggleButton>
+                    </ToggleButtonGroup>
                   </CardContent>
                 </Card>
-              ))}
-            </Box>
+
+                <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="h5">Gerenciar Links ({pendingLinks.length})</Typography>
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => setOpenNewLinkDialog(true)}
+                  >
+                    Adicionar Link
+                  </Button>
+                </Box>
+
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {pendingLinks.map((link, index) => (
+                    <Card 
+                      key={link.id}
+                      sx={{ 
+                        mb: 2,
+                        opacity: draggedIndex === index ? 0.5 : 1,
+                        transition: 'all 0.2s',
+                        cursor: 'move',
+                        '&:hover': {
+                          bgcolor: 'action.hover'
+                        }
+                      }}
+                      onDragStart={() => handleDragStart(index)}
+                      onDragEnter={() => handleDragEnter(index)}
+                      onDragEnd={handleDragEnd}
+                      onDragOver={(e) => e.preventDefault()}
+                      draggable
+                    >
+                      <CardContent>
+                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                          <DragIcon 
+                            sx={{ 
+                              cursor: 'grab',
+                              '&:active': { cursor: 'grabbing' }
+                            }} 
+                          />
+                          
+                          <TextField
+                            label="Título"
+                            value={link.title}
+                            onChange={(e) => handleUpdateLink(link.id, { title: e.target.value })}
+                            size="small"
+                            sx={{ flexGrow: 1 }}
+                          />
+                          
+                          <TextField
+                            label="URL"
+                            value={link.url}
+                            onChange={(e) => handleUpdateLink(link.id, { url: e.target.value })}
+                            size="small"
+                            sx={{ flexGrow: 2 }}
+                          />
+                          
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                checked={link.visible}
+                                onChange={() => {
+                                  handleUpdateLink(link.id, { visible: !link.visible })
+                                }}
+                              />
+                            }
+                            label="Visível"
+                          />
+                          
+                          <IconButton 
+                            onClick={() => openDeleteDialog(link.id)}
+                            color="error"
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
+              </Box>
+            )}
           </Box>
         )}
 
@@ -1084,6 +1165,55 @@ export default function EditLinksPage() {
               autoFocus
             >
               {isDeleting ? 'Excluindo...' : 'Excluir'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={openNewLinkDialog}
+          onClose={() => setOpenNewLinkDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Adicionar Novo Link</DialogTitle>
+          <DialogContent>
+            <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                label="Título"
+                value={newLink.title}
+                onChange={(e) => setNewLink(prev => ({ ...prev, title: e.target.value }))}
+                fullWidth
+              />
+              <TextField
+                label="URL"
+                value={newLink.url}
+                onChange={(e) => setNewLink(prev => ({ ...prev, url: e.target.value }))}
+                fullWidth
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={newLink.visible}
+                    onChange={(e) => setNewLink(prev => ({ ...prev, visible: e.target.checked }))}
+                  />
+                }
+                label="Visível"
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button 
+              onClick={() => setOpenNewLinkDialog(false)}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleAddLink}
+              disabled={loading || !newLink.title || !newLink.url}
+              variant="contained"
+            >
+              {loading ? 'Adicionando...' : 'Adicionar'}
             </Button>
           </DialogActions>
         </Dialog>
