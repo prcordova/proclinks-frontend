@@ -5,6 +5,7 @@ import { RootLayoutClient } from "@/components/root-layout-client";
 import { AuthProvider } from '@/contexts/auth-context'
 import { Header } from '@/components/header'
 import { ThemeProvider } from '@/contexts/theme-context'
+import { Footer } from '@/components/footer'
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,6 +30,7 @@ export default function RootLayout({
                 {children}
               </RootLayoutClient>
             </main>
+            <Footer />
           </AuthProvider>
         </ThemeProvider>
       </body>

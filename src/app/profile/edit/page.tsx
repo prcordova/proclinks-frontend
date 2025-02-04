@@ -38,9 +38,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { SortableLink } from '@/components/SortableLink'
-import Cookies from 'js-cookie'
-import { ChromePicker } from 'react-color'
-
+ 
 interface LinkItem {
   id: string
   title: string

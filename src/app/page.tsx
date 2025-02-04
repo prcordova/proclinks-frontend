@@ -1,12 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 
 export default function Home() {
   return (
     <main className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center">
+      <section className="relative min-h-[80vh] flex items-center">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-6xl font-bold mb-6">
@@ -17,15 +18,11 @@ export default function Home() {
               Crie sua página personalizada, compartilhe seus links e conecte-se com seu público de forma profissional e elegante.
             </p>
             <div className="flex gap-4 justify-center">
-              <Button
-                component={Link}
-                href="/register"
-                variant="contained"
-                size="large"
-                sx={{ px: 4, py: 1.5 }}
-              >
-                Criar minha página
-              </Button>
+              <Link href="/register">
+                <Button size="lg" className="bg-primary text-white hover:bg-primary/90">
+                  Criar minha página
+                </Button>
+              </Link>
               <Link href="/explore">
                 <Button variant="outline" size="lg">Explorar páginas</Button>
               </Link>
@@ -33,62 +30,68 @@ export default function Home() {
           </div>
         </div>
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2">
-          <Link href="#features" className="animate-bounce">
-            <Image 
-              src="/icons/arrow-down.svg" 
-              alt="Rolar para baixo" 
-              width={24} 
-              height={24}
+          <Link 
+            href="#features" 
+            className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors animate-bounce"
+          >
+            <KeyboardArrowDownIcon 
+              sx={{ 
+                fontSize: 32,
+                color: 'primary.main'
+              }} 
             />
           </Link>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-gray-50">
+      <section id="features" className="pb-12 bg-gray-50">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-16">
+          <h2 className="text-4xl font-bold text-center mb-8 text-gray-900 pt-8">
             Tudo que você precisa para sua presença digital
           </h2>
-          <div className="grid md:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="bg-primary/10 w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center">
+              <div className="bg-primary/10 rounded-2xl p-4 mb-4 h-48 md:h-64 flex items-center justify-center overflow-hidden">
                 <Image 
-                  src="/icons/customize.svg" 
+                  src="/assets/imgs/colors.png" 
                   alt="Personalização" 
-                  width={32} 
-                  height={32}
+                  width={200} 
+                  height={200}
+                  className="w-auto h-full object-contain rounded-xl"
                 />
               </div>
-              <h3 className="text-xl font-semibold mb-4">Design Personalizado</h3>
+              <h3 className="text-xl font-semibold mb-2">Design Personalizado</h3>
               <p className="text-gray-600">
                 Customize cores, fontes e layouts para combinar com sua marca
               </p>
             </div>
             <div className="text-center">
-              <div className="bg-primary/10 w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center">
+              <div className="bg-primary/10 rounded-2xl p-4 mb-4 h-48 md:h-64 flex items-center justify-center overflow-hidden">
                 <Image 
-                  src="/icons/analytics.svg" 
+                  src="/assets/imgs/colors.png" 
                   alt="Analytics" 
-                  width={32} 
-                  height={32}
+                  width={200} 
+                  height={200}
+                  className="w-auto h-full object-contain rounded-xl"
                 />
               </div>
-              <h3 className="text-xl font-semibold mb-4">Analytics Detalhado</h3>
+              <h3 className="text-xl font-semibold mb-2">Analytics Detalhado</h3>
               <p className="text-gray-600">
                 Acompanhe visitas, cliques e interações em tempo real
               </p>
             </div>
             <div className="text-center">
-              <div className="bg-primary/10 w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center">
+              <div className="bg-primary/10 rounded-2xl p-4 mb-4 h-48 md:h-64 flex items-center justify-center overflow-hidden">
                 <Image 
-                  src="/icons/social.svg" 
+                  src="/assets/imgs/colors.png" 
                   alt="Social" 
-                  width={32} 
-                  height={32}
+                  width={200} 
+                  height={200}
+                  className="w-auto h-full object-contain rounded-xl"
                 />
               </div>
-              <h3 className="text-xl font-semibold mb-4">Feed Social</h3>
+              <h3 className="text-xl font-semibold mb-2">Feed Social</h3>
               <p className="text-gray-600">
                 Conecte-se com outros criadores e aumente sua rede
               </p>
@@ -129,22 +132,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-primary text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-6">
-            Comece a expandir sua presença digital hoje
-          </h2>
-          <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">
-            Crie sua página gratuitamente em menos de 5 minutos e comece a compartilhar seus links de forma profissional
-          </p>
-          <Link href="/register">
-            <Button size="lg" className="bg-white text-primary hover:bg-gray-100">
-              Criar minha página gratuitamente
-            </Button>
-          </Link>
-        </div>
-      </section>
+       
+   
     </main>
   );
 }

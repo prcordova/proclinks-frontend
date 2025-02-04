@@ -30,6 +30,7 @@ const lightTheme = createTheme({
     mode: 'light',
     primary: {
       main: '#4f46e5',
+      contrastText: '#ffffff',
     },
     background: {
       default: '#ffffff',
@@ -47,6 +48,7 @@ const darkTheme = createTheme({
     mode: 'dark',
     primary: {
       main: '#818cf8',
+      contrastText: '#ffffff',
     },
     background: {
       default: '#0f172a',
