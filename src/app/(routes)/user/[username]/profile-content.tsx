@@ -33,7 +33,7 @@ export function ProfileContent({ username }: { username: string }) {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const profileData = await userApi.getProfile(username)
+        const profileData = await userApi.getPublicProfile(username)
         setProfile(profileData.data)
         setLinks(profileData.data.links || [])
       } catch (error) {

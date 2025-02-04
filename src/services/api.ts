@@ -1,75 +1,42 @@
 import axios from 'axios'
 
-const api = axios.create({
-  baseURL: 'http://localhost:8080/api'
+export const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL
 })
 
 // Interceptor para adicionar o token em todas as requisições
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
+  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  
   return config
 })
 
 export const authApi = {
-  register: async (data: { username: string; email: string; password: string }) => {
-    const response = await api.post('/auth/register', data)
+  login: async (username: string, password: string) => {
+    const response = await api.post('/api/auth/login', { username, password })
     return response.data
   },
 
-  login: async (data: { username: string; password: string }) => {
-    const response = await api.post('/auth/login', data)
-    return response.data
-  }
-}
-
-export const linkApi = {
-  create: async (data: { title: string; url: string; visible: boolean }) => {
-    const response = await api.post('/links', data)
-    return response.data
-  },
-
-  list: async () => {
-    const response = await api.get('/links')
-    return response.data
-  },
-
-  update: async (id: string, data: { title: string; url: string; visible: boolean }) => {
-    const response = await api.put(`/links/${id}`, data)
-    return response.data
-  },
-
-  delete: async (id: string): Promise<void> => {
-    console.log('Chamando API para deletar link:', id)
-    await api.delete(`/links/${id}`)
-  },
-
-  reorder: async (links: { id: string; order: number }[]) => {
-    const response = await api.post('/links/reorder', { links })
-    return response.data
-  },
-
-  getPublicLinks: async (username: string) => {
-    const response = await api.get(`/links/user/${username}`)
-    return response.data
-  },
-
-  updateOrder: async (links: { id: string; order: number }[]) => {
-    const response = await api.put('/links/order', { links })
-    return response.data
-  },
-
-  getLinksByUserId: async (userId: string) => {
-    const response = await api.get(`/links/user/${userId}`)
+  register: async (username: string, email: string, password: string) => {
+    const response = await api.post('/api/auth/register', { username, email, password })
     return response.data
   }
 }
 
 export const userApi = {
-  getProfile: async (username: string) => {
-    const response = await api.get(`/users/${username}`)
+  // Para a página pública do usuário (site.com/@username)
+  getPublicProfile: async (username: string) => {
+    const response = await api.get(`/api/users/${username}`)
+    return response.data
+  },
+
+  // Para a página privada do usuário logado (site.com/profile)
+  getMyProfile: async () => {
+    const response = await api.get('/api/users/profile')
     return response.data
   },
 
@@ -90,6 +57,59 @@ export const userApi = {
   
   getLikedLinks: async (username: string) => {
     const response = await api.get(`/users/${username}/liked-links`)
+    return response.data
+  },
+
+  updateAvatar: async (file: File) => {
+    const formData = new FormData()
+    formData.append('avatar', file)
+    const response = await api.post('/api/users/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    return response.data
+  }
+}
+
+export const linkApi = {
+  getLinks: async () => {
+    const response = await api.get('/api/links')
+    return response.data
+  },
+
+  createLink: async (linkData: any) => {
+    const response = await api.post('/api/links', linkData)
+    return response.data
+  },
+
+  updateLink: async (id: string, linkData: any) => {
+    const response = await api.put(`/api/links/${id}`, linkData)
+    return response.data
+  },
+
+  deleteLink: async (id: string) => {
+    const response = await api.delete(`/api/links/${id}`)
+    return response.data
+  },
+
+  updateOrder: async (links: any[]) => {
+    const response = await api.put('/api/links/order', { links })
+    return response.data
+  },
+
+  reorder: async (links: { id: string; order: number }[]) => {
+    const response = await api.post('/links/reorder', { links })
+    return response.data
+  },
+
+  getPublicLinks: async (username: string) => {
+    const response = await api.get(`/links/user/${username}`)
+    return response.data
+  },
+
+  getLinksByUserId: async (userId: string) => {
+    const response = await api.get(`/links/user/${userId}`)
     return response.data
   }
 }

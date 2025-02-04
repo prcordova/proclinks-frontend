@@ -27,16 +27,18 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const { token, user } = await authApi.login({
-        username: formData.username,
-        password: formData.password
-      })
+      console.log('Enviando dados:', formData) // Debug
+      const response = await authApi.login(formData.username, formData.password)
       
-      login(user, token)
-      router.push('/profile')
-    } catch (err: any) {
-      console.error(err)
-      setError(err.response?.data?.message || 'Erro ao fazer login. Verifique suas credenciais.')
+      if (response.success) {
+        localStorage.setItem('token', response.data.token)
+        router.push('/profile')
+      } else {
+        setError(response.message || 'Erro ao fazer login')
+      }
+    } catch (error: any) {
+      console.error('Erro no login:', error.response?.data || error)
+      setError(error.response?.data?.message || 'Erro ao fazer login')
     } finally {
       setLoading(false)
     }

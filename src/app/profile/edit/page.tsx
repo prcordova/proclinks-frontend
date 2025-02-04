@@ -38,7 +38,8 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { SortableLink } from '@/components/SortableLink'
- 
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+
 interface LinkItem {
   id: string
   title: string
@@ -74,6 +75,17 @@ interface PreviewLink {
   url: string
   likes: number
   isLiked: boolean
+}
+
+interface AlertState {
+  open: boolean
+  message: string
+  severity: 'success' | 'error'
+}
+
+interface DeleteDialogState {
+  open: boolean
+  linkId: string | null
 }
 
 const ColorPickerField = ({ 
@@ -138,8 +150,10 @@ export default function EditLinksPage() {
   })
   const [hasChanges, setHasChanges] = useState(false)
   const [pendingLinks, setPendingLinks] = useState<LinkItem[]>([])
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [linkToDelete, setLinkToDelete] = useState<string | null>(null)
+  const [deleteDialog, setDeleteDialog] = useState<DeleteDialogState>({
+    open: false,
+    linkId: null
+  })
   const [isDeleting, setIsDeleting] = useState(false)
   const [tab, setTab] = useState(0)
   const [settings, setSettings] = useState<ProfileSettings>({
@@ -159,6 +173,11 @@ export default function EditLinksPage() {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const isTablet = useMediaQuery(theme.breakpoints.down('lg'))
+  const [alert, setAlert] = useState<AlertState>({
+    open: false,
+    message: '',
+    severity: 'success'
+  })
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -173,13 +192,22 @@ export default function EditLinksPage() {
       if (!user) return
 
       try {
-        const response = await linkApi.list()
-        console.log('Links carregados:', response)
-        setLinks(response)
-        setPendingLinks(response)
-        setError('')
-      } catch (err) {
-        console.error('Erro ao carregar links:', err)
+        console.log('Carregando links...')
+        const response = await userApi.getMyProfile()
+        console.log('Resposta do servidor:', response)
+        
+        if (response.success && response.data.links) {
+          // Ordenar links por ordem
+          const sortedLinks = response.data.links.sort((a: LinkItem, b: LinkItem) => a.order - b.order)
+          console.log('Links ordenados:', sortedLinks)
+          setLinks(sortedLinks)
+          setPendingLinks(sortedLinks)
+          setError('')
+        } else {
+          console.log('Nenhum link encontrado ou formato inválido')
+        }
+      } catch (error) {
+        console.error('Erro ao carregar links:', error)
         setError('Erro ao carregar seus links. Tente novamente.')
       } finally {
         setLoading(false)
@@ -206,19 +234,36 @@ export default function EditLinksPage() {
       setNewLink({ title: '', url: '', visible: true })
       setOpenNewLinkDialog(false)
       setError('')
+      setAlert({ open: true, message: 'Link adicionado com sucesso', severity: 'success' })
     } catch (err) {
       console.error('Erro ao criar link:', err)
       setError('Erro ao criar link. Tente novamente.')
+      setAlert({ open: true, message: 'Erro ao adicionar link', severity: 'error' })
     } finally {
       setLoading(false)
     }
   }
 
-  const handleUpdateLink = (id: string, data: Partial<LinkItem>) => {
-    setPendingLinks(prev => prev.map(link => 
-      link.id === id ? { ...link, ...data } : link
-    ))
-    setHasChanges(true)
+  const handleUpdateLink = async (id: string, data: Partial<LinkItem>) => {
+    if (!id) return // Proteção contra id undefined
+    
+    try {
+      setLoading(true)
+      console.log('Atualizando link:', { id, data }) // Debug
+      const response = await linkApi.updateLink(id, data)
+      if (response.success) {
+        setLinks(links.map(link => 
+          link.id === id ? { ...link, ...data } : link
+        ))
+        setHasChanges(true)
+        setAlert({ open: true, message: 'Link atualizado com sucesso', severity: 'success' })
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar link:', error)
+      setAlert({ open: true, message: 'Erro ao atualizar link', severity: 'error' })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSaveChanges = async () => {
@@ -233,43 +278,42 @@ export default function EditLinksPage() {
         }))
       })
       setMessage('Alterações salvas com sucesso')
+      setAlert({ open: true, message: 'Alterações salvas com sucesso', severity: 'success' })
     } catch (err) {
       console.error('Erro ao salvar alterações:', err)
       setMessage('Erro ao salvar alterações')
+      setAlert({ open: true, message: 'Erro ao salvar alterações', severity: 'error' })
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDeleteClick = (linkId: string) => {
-    console.log('Link recebido para exclusão:', { linkId, type: typeof linkId })
-    setLinkToDelete(linkId)
-    setDeleteDialogOpen(true)
+  const openDeleteDialog = (id: string) => {
+    setDeleteDialog({ open: true, linkId: id })
   }
 
-  const handleConfirmDelete = async () => {
-    console.log('Estado atual:', { linkToDelete, type: typeof linkToDelete })
-    
-    if (!linkToDelete) {
-      console.log('Nenhum link selecionado para exclusão')
-      return
-    }
+  const closeDeleteDialog = () => {
+    setDeleteDialog({ open: false, linkId: null })
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteDialog.linkId) return
 
     try {
-      console.log('Tentando excluir link:', linkToDelete)
-      setIsDeleting(true)
-
-      await linkApi.delete(linkToDelete)
-
-      setPendingLinks(prev => prev.filter(link => link.id !== linkToDelete))
-      setLinks(prev => prev.filter(link => link.id !== linkToDelete))
-      setDeleteDialogOpen(false)
-      setLinkToDelete(null)
-    } catch (err) {
-      console.error('Erro ao deletar link:', err)
+      setLoading(true)
+      const response = await linkApi.delete(deleteDialog.linkId)
+      if (response.success) {
+        setLinks(links.filter(link => link.id !== deleteDialog.linkId))
+        setPendingLinks(prev => prev.filter(link => link.id !== deleteDialog.linkId))
+        showAlert('Link excluído com sucesso', 'success')
+      }
+    } catch (error) {
+      console.error('Erro ao deletar link:', error)
       setError('Erro ao deletar link. Tente novamente.')
+      showAlert('Erro ao excluir link', 'error')
     } finally {
-      setIsDeleting(false)
+      setLoading(false)
+      closeDeleteDialog()
     }
   }
 
@@ -284,27 +328,43 @@ export default function EditLinksPage() {
         }))
       )
       setMessage('Ordem atualizada com sucesso')
+      setAlert({ open: true, message: 'Ordem atualizada com sucesso', severity: 'success' })
     } catch (err) {
       console.error('Erro ao atualizar ordem:', err)
       setMessage('Erro ao atualizar ordem')
+      setAlert({ open: true, message: 'Erro ao atualizar ordem', severity: 'error' })
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDragEnd = async (event: any) => {
-    const { active, over } = event
+  const handleDragEnd = async (result: any) => {
+    if (!result.destination) return
 
-    if (active.id !== over.id) {
-      setLinks((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id)
-        const newIndex = items.findIndex((item) => item.id === over.id)
-        
-        const newOrder = arrayMove(items, oldIndex, newIndex)
-        // Atualizar ordem no backend
-        updateLinksOrder(newOrder)
-        return newOrder
-      })
+    try {
+      setLoading(true)
+      const items = Array.from(links)
+      const [reorderedItem] = items.splice(result.source.index, 1)
+      items.splice(result.destination.index, 0, reorderedItem)
+
+      const updatedLinks = items.map((link, index) => ({
+        ...link,
+        order: index + 1
+      }))
+
+      setLinks(updatedLinks)
+
+      const response = await linkApi.updateOrder(updatedLinks)
+      if (response.success) {
+        setAlert({ open: true, message: 'Ordem atualizada com sucesso', severity: 'success' })
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar ordem:', error)
+      setAlert({ open: true, message: 'Erro ao atualizar ordem', severity: 'error' })
+      // Recarrega os links em caso de erro
+      loadLinks()
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -443,6 +503,14 @@ export default function EditLinksPage() {
     }))
   }
 
+  const showAlert = (message: string, severity: 'success' | 'error') => {
+    setAlert({ open: true, message, severity })
+  }
+
+  const handleCloseAlert = () => {
+    setAlert({ ...alert, open: false })
+  }
+
   if (authLoading || loading) {
     return (
       <Container>
@@ -485,7 +553,7 @@ export default function EditLinksPage() {
                   aria-label="ordenação"
                 >
                   <ToggleButton value="custom" aria-label="personalizada">
-                    <DragIndicator sx={{ mr: 1 }} />
+                    <DragIcon sx={{ mr: 1 }} />
                     Personalizada
                   </ToggleButton>
                   <ToggleButton value="date" aria-label="data">
@@ -520,7 +588,7 @@ export default function EditLinksPage() {
                       <SortableLink
                         link={link}
                         onUpdate={handleUpdateLink}
-                        onDelete={handleDeleteClick}
+                        onDelete={openDeleteDialog}
                         isDraggable={settings.sortMode === 'custom'}
                       />
                     </Grid>
@@ -752,15 +820,13 @@ export default function EditLinksPage() {
         </Box>
 
         <Snackbar
-          open={!!message}
-          autoHideDuration={3000}
-          onClose={() => setMessage('')}
-          sx={{
-            bottom: isMobile ? 80 : 24
-          }}
+          open={alert.open}
+          autoHideDuration={6000}
+          onClose={handleCloseAlert}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert severity="info" onClose={() => setMessage('')}>
-            {message}
+          <Alert onClose={handleCloseAlert} severity={alert.severity}>
+            {alert.message}
           </Alert>
         </Snackbar>
       </Box>
