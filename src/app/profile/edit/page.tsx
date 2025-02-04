@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { linkApi, userApi } from '@/services/api'
 import { 
   Container, Box, Typography, Button, TextField, 
-  Switch, FormControlLabel, Grid ,
+  Switch, FormControlLabel, 
    Dialog, DialogTitle,
   DialogContent, DialogActions, DialogContentText,
   Tabs, Tab, Card, CardContent,
@@ -19,28 +19,15 @@ import {
   Delete as DeleteIcon,
   Add as AddIcon,
   Sort as SortIcon,
-  DragIndicator,
+ 
   Favorite as HeartIcon,
   FavoriteBorder as HeartOutlineIcon
 } from '@mui/icons-material'
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { SortableLink } from '@/components/SortableLink'
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
-
+ 
+ 
+ import { useThemeContext } from '@/contexts/theme-context'
+import { AvatarEdit } from './avatar-edit'
+  
 interface LinkItem {
   id: string
   title: string
@@ -139,73 +126,7 @@ const ColorPickerField = ({
   </Box>
 )
 
-function SortableCard({ link, onUpdate, onDelete }: any) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: link.id })
-
-  const dragStyle = {
-    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : '',
-    transition,
-    zIndex: isDragging ? 1 : 0,
-    position: 'relative' as const,
-  }
-
-  return (
-    <div ref={setNodeRef} style={dragStyle}>
-      <Card sx={{ mb: 2, bgcolor: isDragging ? 'action.hover' : 'background.paper' }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-            <IconButton {...attributes} {...listeners} size="small">
-              <DragIcon />
-            </IconButton>
-            
-            <TextField
-              label="Título"
-              value={link.title}
-              onChange={(e) => onUpdate(link.id, { title: e.target.value })}
-              size="small"
-              sx={{ flexGrow: 1 }}
-            />
-            
-            <TextField
-              label="URL"
-              value={link.url}
-              onChange={(e) => onUpdate(link.id, { url: e.target.value })}
-              size="small"
-              sx={{ flexGrow: 2 }}
-            />
-            
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={link.visible}
-                  onChange={() => {
-                    handleUpdateLink(link.id, { visible: !link.visible })
-                  }}
-                />
-              }
-              label="Visível"
-            />
-            
-            <IconButton 
-              onClick={() => onDelete(link.id)}
-              color="error"
-            >
-              <DeleteIcon />
-            </IconButton>
-          </Box>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
-
+ 
 export default function EditLinksPage() {
   const { user, loading: authLoading } = useAuth()
    const [links, setLinks] = useState<LinkItem[]>([])
@@ -249,17 +170,25 @@ export default function EditLinksPage() {
   })
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const { mode, setMode } = useThemeContext()
+   const [profileData, setProfileData] = useState<ProfileData | null>(null)
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  )
+ 
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const response = await userApi.getMyProfile()
+        if (response.success) {
+          setProfileData(response.data)
+        }
+      } catch (error) {
+        console.error('Erro ao carregar perfil:', error)
+      }
+    }
+
+    loadProfile()
+  }, [])
 
   // Carregar links
   useEffect(() => {
@@ -542,15 +471,7 @@ export default function EditLinksPage() {
 
     setLinks(sortedLinks)
   }
-
-  const handleColorChange = (color: string, field: keyof ProfileSettings) => {
-    setSettings(prev => ({
-      ...prev,
-      [field]: color
-    }))
-    setHasChanges(true)
-  }
-
+ 
   const handleSpacingChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSpacing = Number(event.target.value)
     setSettings(prev => ({
@@ -667,13 +588,30 @@ export default function EditLinksPage() {
     setAlert({ ...alert, open: false })
   }
 
-  if (authLoading || loading) {
+  const handleAvatarUpdated = (newAvatarUrl: string) => {
+    if (profileData) {
+      setProfileData({
+        ...profileData,
+        avatar: newAvatarUrl
+      })
+      setAlert({
+        open: true,
+        message: 'Avatar atualizado com sucesso',
+        severity: 'success'
+      })
+    }
+  }
+
+  if (loading || !profileData) {
     return (
-      <Container>
-        <Box sx={{ py: 4, textAlign: 'center' }}>
-          <Typography>Carregando...</Typography>
-        </Box>
-      </Container>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '100vh' 
+      }}>
+        <CircularProgress />
+      </Box>
     )
   }
 
@@ -694,6 +632,36 @@ export default function EditLinksPage() {
           Salvando alterações...
         </Typography>
       </Backdrop>
+
+      <div className="text-center mb-8 animate-fade-in">
+     
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mt-4">
+          {profileData.username}
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">@{profileData.username}</p>
+        <p className="mt-2 text-gray-700 dark:text-gray-300">{profileData.bio}</p>
+        
+        <div className="flex justify-center gap-4 mt-4">
+          <div className="text-sm">
+            <span className="font-medium dark:text-white">
+              {profileData.followers.length}
+            </span>
+            <span className="text-gray-500 dark:text-gray-400 ml-1">
+              seguidores
+            </span>
+          </div>
+          <div className="text-sm">
+            <span className="font-medium dark:text-white">
+              {profileData.following.length}
+            </span>
+            <span className="text-gray-500 dark:text-gray-400 ml-1">
+              seguindo
+            </span>
+          </div>
+        </div>
+
+       
+      </div>
 
       <Box sx={{ py: 4 }}>
         <Typography variant="h4" gutterBottom>
@@ -832,7 +800,6 @@ export default function EditLinksPage() {
             gap: 4,
             minHeight: 'calc(100vh - 200px)'
           }}>
-            {/* Painel de Configurações */}
             <Box sx={{ 
               width: isMobile ? '100%' : isTablet ? '350px' : '400px',
               flexShrink: 0,
@@ -847,6 +814,13 @@ export default function EditLinksPage() {
               }}>
                 <Card>
                   <CardContent>
+                    <AvatarEdit
+                      currentAvatar={profileData?.avatar}
+                      onAvatarUpdated={handleAvatarUpdated}
+                    />
+                    
+                    <Divider sx={{ my: 3 }} />
+                    
                     <Typography variant="h6" gutterBottom>
                       Cores
                     </Typography>
@@ -1018,7 +992,6 @@ export default function EditLinksPage() {
               </Box>
             </Box>
 
-            {/* Preview em Tempo Real */}
             <Box sx={{ 
               flex: 1,
               order: isMobile ? 1 : 2
@@ -1087,7 +1060,6 @@ export default function EditLinksPage() {
           </Alert>
         </Snackbar>
 
-        {/* Dialog de confirmação de exclusão */}
         <Dialog
           open={deleteDialog.open}
           onClose={closeDeleteDialog}
@@ -1116,7 +1088,6 @@ export default function EditLinksPage() {
           </DialogActions>
         </Dialog>
 
-        {/* Snackbar para mensagens */}
         {message && (
           <Box
             sx={{
