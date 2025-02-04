@@ -35,6 +35,7 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
+  useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { SortableLink } from '@/components/SortableLink'
@@ -47,6 +48,7 @@ interface LinkItem {
   visible: boolean
   createdAt: string
   likes?: number
+  order: number
 }
 
 interface NewLinkData {
@@ -137,6 +139,71 @@ const ColorPickerField = ({
   </Box>
 )
 
+function SortableCard({ link, onUpdate, onDelete }: any) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: link.id })
+
+  const dragStyle = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : '',
+    transition,
+    zIndex: isDragging ? 1 : 0,
+    position: 'relative' as const,
+  }
+
+  return (
+    <div ref={setNodeRef} style={dragStyle}>
+      <Card sx={{ mb: 2, bgcolor: isDragging ? 'action.hover' : 'background.paper' }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <IconButton {...attributes} {...listeners} size="small">
+              <DragIcon />
+            </IconButton>
+            
+            <TextField
+              label="Título"
+              value={link.title}
+              onChange={(e) => onUpdate(link.id, { title: e.target.value })}
+              size="small"
+              sx={{ flexGrow: 1 }}
+            />
+            
+            <TextField
+              label="URL"
+              value={link.url}
+              onChange={(e) => onUpdate(link.id, { url: e.target.value })}
+              size="small"
+              sx={{ flexGrow: 2 }}
+            />
+            
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={link.visible}
+                  onChange={(e) => onUpdate(link.id, { visible: e.target.checked })}
+                />
+              }
+              label="Visível"
+            />
+            
+            <IconButton 
+              onClick={() => onDelete(link.id)}
+              color="error"
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Box>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 export default function EditLinksPage() {
   const { user, loading: authLoading } = useAuth()
    const [links, setLinks] = useState<LinkItem[]>([])
@@ -178,9 +245,14 @@ export default function EditLinksPage() {
     message: '',
     severity: 'success'
   })
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -317,54 +389,41 @@ export default function EditLinksPage() {
     }
   }
 
-  const updateLinksOrder = async (newLinks: LinkItem[]) => {
-    try {
-      setLoading(true)
-      // Atualiza a ordem dos links no backend
-      await linkApi.updateOrder(
-        newLinks.map((link, index) => ({
-          id: link.id,
-          order: index
-        }))
-      )
-      setMessage('Ordem atualizada com sucesso')
-      setAlert({ open: true, message: 'Ordem atualizada com sucesso', severity: 'success' })
-    } catch (err) {
-      console.error('Erro ao atualizar ordem:', err)
-      setMessage('Erro ao atualizar ordem')
-      setAlert({ open: true, message: 'Erro ao atualizar ordem', severity: 'error' })
-    } finally {
-      setLoading(false)
-    }
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index)
   }
 
-  const handleDragEnd = async (result: any) => {
-    if (!result.destination) return
+  const handleDragEnter = (index: number) => {
+    if (draggedIndex === null) return
 
+    const newLinks = [...pendingLinks]
+    const draggedLink = newLinks[draggedIndex]
+    
+    // Remove o item arrastado e insere na nova posição
+    newLinks.splice(draggedIndex, 1)
+    newLinks.splice(index, 0, draggedLink)
+    
+    setPendingLinks(newLinks)
+    setDraggedIndex(index)
+  }
+
+  const handleDragEnd = async () => {
+    if (draggedIndex === null) return
+
+    setDraggedIndex(null)
+
+    // Atualiza a ordem no backend
     try {
-      setLoading(true)
-      const items = Array.from(links)
-      const [reorderedItem] = items.splice(result.source.index, 1)
-      items.splice(result.destination.index, 0, reorderedItem)
-
-      const updatedLinks = items.map((link, index) => ({
-        ...link,
+      const updatedLinks = pendingLinks.map((link, index) => ({
+        id: link.id,
         order: index + 1
       }))
 
-      setLinks(updatedLinks)
-
-      const response = await linkApi.updateOrder(updatedLinks)
-      if (response.success) {
-        setAlert({ open: true, message: 'Ordem atualizada com sucesso', severity: 'success' })
-      }
+      await linkApi.updateOrder(updatedLinks)
+      setMessage('Ordem atualizada com sucesso')
     } catch (error) {
       console.error('Erro ao atualizar ordem:', error)
-      setAlert({ open: true, message: 'Erro ao atualizar ordem', severity: 'error' })
-      // Recarrega os links em caso de erro
-      loadLinks()
-    } finally {
-      setLoading(false)
+      setMessage('Erro ao atualizar ordem')
     }
   }
 
@@ -522,7 +581,7 @@ export default function EditLinksPage() {
   }
 
   return (
-    <Container maxWidth="xl">
+    <Container maxWidth="lg">
       <Box sx={{ py: 4 }}>
         <Typography variant="h4" gutterBottom>
           Editar Perfil
@@ -572,30 +631,82 @@ export default function EditLinksPage() {
               </CardContent>
             </Card>
 
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-              disabled={settings.sortMode !== 'custom'}
-            >
-              <SortableContext
-                items={links}
-                strategy={verticalListSortingStrategy}
+            <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h5">Gerenciar Links ({pendingLinks.length})</Typography>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => setOpenNewLinkDialog(true)}
               >
-                <Grid container spacing={2}>
-                  {links.map((link) => (
-                    <Grid item xs={12} key={link.id}>
-                      <SortableLink
-                        link={link}
-                        onUpdate={handleUpdateLink}
-                        onDelete={openDeleteDialog}
-                        isDraggable={settings.sortMode === 'custom'}
+                Adicionar Link
+              </Button>
+            </Box>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {pendingLinks.map((link, index) => (
+                <Card 
+                  key={link.id}
+                  sx={{ 
+                    mb: 2,
+                    opacity: draggedIndex === index ? 0.5 : 1,
+                    transition: 'all 0.2s',
+                    cursor: 'move',
+                    '&:hover': {
+                      bgcolor: 'action.hover'
+                    }
+                  }}
+                  onDragStart={() => handleDragStart(index)}
+                  onDragEnter={() => handleDragEnter(index)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(e) => e.preventDefault()}
+                  draggable
+                >
+                  <CardContent>
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                      <DragIcon 
+                        sx={{ 
+                          cursor: 'grab',
+                          '&:active': { cursor: 'grabbing' }
+                        }} 
                       />
-                    </Grid>
-                  ))}
-                </Grid>
-              </SortableContext>
-            </DndContext>
+                      
+                      <TextField
+                        label="Título"
+                        value={link.title}
+                        onChange={(e) => handleUpdateLink(link.id, { title: e.target.value })}
+                        size="small"
+                        sx={{ flexGrow: 1 }}
+                      />
+                      
+                      <TextField
+                        label="URL"
+                        value={link.url}
+                        onChange={(e) => handleUpdateLink(link.id, { url: e.target.value })}
+                        size="small"
+                        sx={{ flexGrow: 2 }}
+                      />
+                      
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={link.visible}
+                            onChange={(e) => handleUpdateLink(link.id, { visible: e.target.checked })}
+                          />
+                        }
+                        label="Visível"
+                      />
+                      
+                      <IconButton 
+                        onClick={() => openDeleteDialog(link.id)}
+                        color="error"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
           </Box>
         )}
 
@@ -829,6 +940,53 @@ export default function EditLinksPage() {
             {alert.message}
           </Alert>
         </Snackbar>
+
+        {/* Dialog de confirmação de exclusão */}
+        <Dialog
+          open={deleteDialog.open}
+          onClose={closeDeleteDialog}
+        >
+          <DialogTitle>Confirmar exclusão</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Tem certeza que deseja excluir este link? Esta ação não pode ser desfeita.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button 
+              onClick={closeDeleteDialog}
+              disabled={isDeleting}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={confirmDelete}
+              color="error"
+              disabled={isDeleting}
+              autoFocus
+            >
+              {isDeleting ? 'Excluindo...' : 'Excluir'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Snackbar para mensagens */}
+        {message && (
+          <Box
+            sx={{
+              position: 'fixed',
+              bottom: 20,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              bgcolor: 'background.paper',
+              p: 2,
+              borderRadius: 1,
+              boxShadow: 3,
+            }}
+          >
+            {message}
+          </Box>
+        )}
       </Box>
     </Container>
   )
