@@ -548,6 +548,16 @@ export default function EditLinksPage() {
       ...prev,
       [field]: color
     }))
+    setHasChanges(true)
+  }
+
+  const handleSpacingChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newSpacing = Number(event.target.value)
+    setSettings(prev => ({
+      ...prev,
+      spacing: newSpacing
+    }))
+    setHasChanges(true)
   }
 
   // Links de exemplo para o preview
@@ -648,14 +658,6 @@ export default function EditLinksPage() {
       </MuiLink>
     </Box>
   )
-
-  const handleSpacingChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newSpacing = Number(event.target.value)
-    setSettings(prev => ({
-      ...prev,
-      spacing: newSpacing
-    }))
-  }
 
   const showAlert = (message: string, severity: 'success' | 'error') => {
     setAlert({ open: true, message, severity })
@@ -857,50 +859,65 @@ export default function EditLinksPage() {
                       <ColorPickerField
                         label="Cor de Fundo"
                         value={settings.backgroundColor}
-                        onChange={(color) => setSettings(prev => ({
-                          ...prev,
-                          backgroundColor: color
-                        }))}
+                        onChange={(color) => {
+                          setSettings(prev => ({
+                            ...prev,
+                            backgroundColor: color
+                          }))
+                          setHasChanges(true)
+                        }}
                         isMobile={isMobile}
                       />
 
                       <ColorPickerField
                         label="Cor dos Cards"
                         value={settings.cardColor}
-                        onChange={(color) => setSettings(prev => ({
-                          ...prev,
-                          cardColor: color
-                        }))}
+                        onChange={(color) => {
+                          setSettings(prev => ({
+                            ...prev,
+                            cardColor: color
+                          }))
+                          setHasChanges(true)
+                        }}
                         isMobile={isMobile}
                       />
 
                       <ColorPickerField
                         label="Cor do Texto"
                         value={settings.textColor}
-                        onChange={(color) => setSettings(prev => ({
-                          ...prev,
-                          textColor: color
-                        }))}
+                        onChange={(color) => {
+                          setSettings(prev => ({
+                            ...prev,
+                            textColor: color
+                          }))
+                          setHasChanges(true)
+                        }}
                         isMobile={isMobile}
                       />
 
                       <ColorPickerField
                         label="Cor do Texto dos Cards"
                         value={settings.cardTextColor}
-                        onChange={(color) => setSettings(prev => ({
-                          ...prev,
-                          cardTextColor: color
-                        }))}
+                        onChange={(color) => {
+                          setSettings(prev => ({
+                            ...prev,
+                            cardTextColor: color
+                          }))
+                          setHasChanges(true)
+                        }}
                         isMobile={isMobile}
                       />
 
                       <ColorPickerField
                         label="Cor dos Likes"
                         value={settings.likesColor}
-                        onChange={(color) => setSettings(prev => ({
-                          ...prev,
-                          likesColor: color
-                        }))}
+                        onChange={(color) => {
+                          setSettings(prev => ({
+                            ...prev,
+                            likesColor: color
+                          }))
+                          setHasChanges(true)
+                        }}
                         isMobile={isMobile}
                       />
                     </Box>
@@ -920,10 +937,13 @@ export default function EditLinksPage() {
                         <InputLabel>Modo de Exibição</InputLabel>
                         <Select
                           value={settings.displayMode}
-                          onChange={(e) => setSettings(prev => ({
-                            ...prev,
-                            displayMode: e.target.value as 'list' | 'grid'
-                          }))}
+                          onChange={(e) => {
+                            setSettings(prev => ({
+                              ...prev,
+                              displayMode: e.target.value as 'list' | 'grid'
+                            }))
+                            setHasChanges(true)
+                          }}
                           size={isMobile ? "small" : "medium"}
                         >
                           <MenuItem value="list">Lista</MenuItem>
@@ -935,7 +955,13 @@ export default function EditLinksPage() {
                         <InputLabel>Estilo dos Cards</InputLabel>
                         <Select
                           value={settings.cardStyle}
-                          onChange={(e) => handleColorChange(e.target.value as string, 'cardStyle')}
+                          onChange={(e) => {
+                            setSettings(prev => ({
+                              ...prev,
+                              cardStyle: e.target.value as 'rounded' | 'square' | 'pill'
+                            }))
+                            setHasChanges(true)
+                          }}
                           size={isMobile ? "small" : "medium"}
                         >
                           <MenuItem value="rounded">Arredondado</MenuItem>
@@ -948,7 +974,13 @@ export default function EditLinksPage() {
                         <InputLabel>Animação</InputLabel>
                         <Select
                           value={settings.animation}
-                          onChange={(e) => handleColorChange(e.target.value as string, 'animation')}
+                          onChange={(e) => {
+                            setSettings(prev => ({
+                              ...prev,
+                              animation: e.target.value as 'none' | 'fade' | 'slide' | 'bounce'
+                            }))
+                            setHasChanges(true)
+                          }}
                           size={isMobile ? "small" : "medium"}
                         >
                           <MenuItem value="none">Nenhuma</MenuItem>
