@@ -33,16 +33,18 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
-      const data = await authApi.register({
+      const { token, user } = await authApi.register({
         username: formData.username,
         email: formData.email,
         password: formData.password
       })
-      localStorage.setItem('token', data.token)
-      router.push('/profile')
-    } catch (err) {
-      console.log(err)
-      setError('Erro ao criar conta. Verifique os dados e tente novamente.')
+      
+      localStorage.setItem('token', token)
+      localStorage.setItem('currentUser', user.username)
+      router.push('/profile/edit')
+    } catch (err: any) {
+      console.error(err)
+      setError(err.response?.data?.message || 'Erro ao criar conta. Tente novamente.')
     } finally {
       setLoading(false)
     }

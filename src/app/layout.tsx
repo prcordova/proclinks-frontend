@@ -1,17 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { RootLayoutClient } from "@/components/root-layout-client";
+import { AuthProvider } from '@/contexts/auth-context'
+import { Header } from '@/components/header'
+import { ThemeProvider } from '@/contexts/theme-context'
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "ProcLinks - Seu hub de links personalizado",
@@ -25,10 +20,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}>
-        <RootLayoutClient>
-          {children}
-        </RootLayoutClient>
+      <body className={inter.className}>
+        <ThemeProvider>
+          <AuthProvider>
+            <Header />
+            <main>
+              <RootLayoutClient>
+                {children}
+              </RootLayoutClient>
+            </main>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

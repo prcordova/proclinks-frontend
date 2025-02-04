@@ -1,19 +1,23 @@
 'use client'
 
-import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import { Button, Container, Typography, Box, Divider, Paper } from '@mui/material'
 import GitHubIcon from '@mui/icons-material/GitHub'
 import GoogleIcon from '@mui/icons-material/Google'
 import FacebookIcon from '@mui/icons-material/Facebook'
+import { Input } from "@/components/ui/input"
 import { authApi } from "@/services/api"
 import { useRouter } from "next/navigation"
 import Link from 'next/link'
+import { useAuth } from '@/contexts/auth-context'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
+  const { login } = useAuth()
+  const [formData, setFormData] = useState({
+    username: '',
+    password: ''
+  })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -23,15 +27,28 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const data = await authApi.login(username, password)
-      localStorage.setItem('token', data.token)
+      const { token, user } = await authApi.login({
+        username: formData.username,
+        password: formData.password
+      })
+      
+      login(user, token)
       router.push('/profile')
-    } catch (err) {
-      console.log(err)
-      setError('Usuário ou senha inválidos')
+    } catch (err: any) {
+      console.error(err)
+      setError(err.response?.data?.message || 'Erro ao fazer login. Verifique suas credenciais.')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleChange = (field: keyof typeof formData) => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: e.target.value
+    }))
   }
 
   const handleSocialLogin = async (provider: string) => {
@@ -47,23 +64,15 @@ export default function LoginPage() {
         justifyContent: 'center',
         py: 4
       }}>
-        <Paper elevation={3} sx={{ 
-          p: 4, 
-          borderRadius: 2,
-          bgcolor: 'background.paper'
-        }}>
+        <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
           <Typography 
             component="h1" 
             variant="h4" 
-            sx={{ 
-              mb: 4, 
-              textAlign: 'center',
-              fontWeight: 'bold'
-            }}
+            sx={{ mb: 4, textAlign: 'center', fontWeight: 'bold' }}
           >
-            Bem-vindo de volta
+            Login
           </Typography>
-          
+
           {error && (
             <Typography 
               color="error" 
@@ -81,14 +90,14 @@ export default function LoginPage() {
             </Typography>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
+          <Box component="form" onSubmit={handleSubmit}>
             <Input
               margin="normal"
               required
               fullWidth
               label="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={formData.username}
+              onChange={handleChange('username')}
               disabled={loading}
             />
             <Input
@@ -97,34 +106,28 @@ export default function LoginPage() {
               fullWidth
               label="Senha"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={formData.password}
+              onChange={handleChange('password')}
               disabled={loading}
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ 
-                mt: 3, 
-                mb: 2,
-                py: 1.5,
-                fontSize: '1.1rem'
-              }}
+              sx={{ mt: 3, mb: 2, py: 1.5, fontSize: '1.1rem' }}
               disabled={loading}
             >
               {loading ? 'Entrando...' : 'Entrar'}
             </Button>
           </Box>
 
-          <Divider sx={{ my: 3 }}>ou continue com</Divider>
+          <Divider sx={{ my: 3 }}>ou entre com</Divider>
 
           <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
             <Button
               fullWidth
               variant="outlined"
               startIcon={<GitHubIcon />}
-              onClick={() => handleSocialLogin('github')}
               disabled={loading}
             >
               GitHub
@@ -133,7 +136,6 @@ export default function LoginPage() {
               fullWidth
               variant="outlined"
               startIcon={<GoogleIcon />}
-              onClick={() => handleSocialLogin('google')}
               disabled={loading}
             >
               Google
@@ -142,7 +144,6 @@ export default function LoginPage() {
               fullWidth
               variant="outlined"
               startIcon={<FacebookIcon />}
-              onClick={() => handleSocialLogin('facebook')}
               disabled={loading}
             >
               Facebook
