@@ -15,6 +15,28 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+interface ProfileUpdateData {
+  backgroundColor?: string;
+  cardColor?: string;
+  textColor?: string;
+  cardTextColor?: string;
+  displayMode?: 'list' | 'grid';
+  cardStyle?: 'rounded' | 'square' | 'pill';
+  animation?: 'none' | 'fade' | 'slide' | 'bounce';
+  font?: 'default' | 'serif' | 'mono';
+  spacing?: number;
+  sortMode?: 'custom' | 'date' | 'name' | 'likes';
+  likesColor?: string;
+}
+
+interface LinkData {
+  title: string;
+  url: string;
+  description?: string;
+  isPublic?: boolean;
+  tags?: string[];
+}
+
 export const authApi = {
   login: async (username: string, password: string) => {
     const response = await api.post('/api/auth/login', { username, password })
@@ -45,8 +67,22 @@ export const userApi = {
     return response.data
   },
 
-  updateProfile: async (data: any) => {
-    const response = await api.put('/users/profile', data)
+  updateProfile: async (data: ProfileUpdateData) => {
+    const response = await api.put('/api/users/profile', {
+      profile: {
+        backgroundColor: data.backgroundColor,
+        cardColor: data.cardColor,
+        textColor: data.textColor,
+        cardTextColor: data.cardTextColor,
+        displayMode: data.displayMode,
+        cardStyle: data.cardStyle,
+        animation: data.animation,
+        font: data.font,
+        spacing: data.spacing,
+        sortMode: data.sortMode,
+        likesColor: data.likesColor
+      }
+    })
     return response.data
   },
 
@@ -78,12 +114,12 @@ export const linkApi = {
     return response.data
   },
 
-  createLink: async (linkData: any) => {
+  createLink: async (linkData: LinkData) => {
     const response = await api.post('/api/links', linkData)
     return response.data
   },
 
-  updateLink: async (id: string, linkData: any) => {
+  updateLink: async (id: string, linkData: LinkData) => {
     const response = await api.put(`/api/links/${id}`, linkData)
     return response.data
   },
@@ -93,14 +129,17 @@ export const linkApi = {
     return response.data
   },
 
-  updateOrder: async (links: any[]) => {
-    const response = await api.put('/api/links/order', { links })
-    return response.data
-  },
-
-  reorder: async (links: { id: string; order: number }[]) => {
-    const response = await api.post('/links/reorder', { links })
-    return response.data
+  reorder: async (data: { links: string[] }) => {
+    try {
+      console.log('Enviando dados para reordenação:', data)
+      const response = await api.post('/api/links/reorder', {
+        links: data.links.map(id => id.toString())
+      })
+      return { success: true, data: response.data }
+    } catch (error) {
+      console.error('Erro ao reordenar links:', error)
+      return { success: false, error }
+    }
   },
 
   getPublicLinks: async (username: string) => {

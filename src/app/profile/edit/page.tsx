@@ -269,9 +269,21 @@ export default function EditLinksPage() {
         console.log('Resposta do servidor:', response)
         
         if (response.success && response.data.links) {
+          // Garantir que cada link tem todos os campos necessários
+          const formattedLinks = response.data.links.map((link: any, index: number) => ({
+            id: link._id || link.id, // Aceita ambos os formatos
+            title: link.title,
+            url: link.url,
+            visible: link.visible,
+            order: link.order || index, // Usa o índice como fallback
+            createdAt: link.createdAt,
+            likes: link.likes || 0
+          }))
+          
           // Ordenar links por ordem
-          const sortedLinks = response.data.links.sort((a: LinkItem, b: LinkItem) => a.order - b.order)
+          const sortedLinks = formattedLinks.sort((a: LinkItem, b: LinkItem) => a.order - b.order)
           console.log('Links ordenados:', sortedLinks)
+          
           setLinks(sortedLinks)
           setPendingLinks(sortedLinks)
           setError('')
@@ -341,16 +353,27 @@ export default function EditLinksPage() {
   const handleSaveChanges = async () => {
     try {
       setLoading(true)
-      // Salva as configurações do perfil
-      await userApi.updateProfile({
-        ...settings,
-        links: links.map((link, index) => ({
-          ...link,
-          order: index
-        }))
+      // Envia apenas as configurações do perfil
+      const response = await userApi.updateProfile({
+        backgroundColor: settings.backgroundColor,
+        cardColor: settings.cardColor,
+        textColor: settings.textColor,
+        cardTextColor: settings.cardTextColor,
+        displayMode: settings.displayMode,
+        cardStyle: settings.cardStyle,
+        animation: settings.animation,
+        font: settings.font,
+        spacing: settings.spacing,
+        sortMode: settings.sortMode,
+        likesColor: settings.likesColor
       })
-      setMessage('Alterações salvas com sucesso')
-      setAlert({ open: true, message: 'Alterações salvas com sucesso', severity: 'success' })
+
+      if (response.success) {
+        setMessage('Alterações salvas com sucesso')
+        setAlert({ open: true, message: 'Alterações salvas com sucesso', severity: 'success' })
+      } else {
+        throw new Error('Erro ao salvar alterações')
+      }
     } catch (err) {
       console.error('Erro ao salvar alterações:', err)
       setMessage('Erro ao salvar alterações')
@@ -403,27 +426,41 @@ export default function EditLinksPage() {
     newLinks.splice(draggedIndex, 1)
     newLinks.splice(index, 0, draggedLink)
     
-    setPendingLinks(newLinks)
+    // Atualiza a ordem dos links
+    const updatedLinks = newLinks.map((link, idx) => ({
+      ...link,
+      order: idx
+    }))
+    
+    setPendingLinks(updatedLinks)
     setDraggedIndex(index)
   }
 
   const handleDragEnd = async () => {
     if (draggedIndex === null) return
-
     setDraggedIndex(null)
 
-    // Atualiza a ordem no backend
     try {
-      const updatedLinks = pendingLinks.map((link, index) => ({
-        id: link.id,
-        order: index + 1
-      }))
+      // Garantir que temos IDs válidos
+      const linkIds = pendingLinks.map(link => link.id)
+      console.log('IDs dos links para reordenação:', linkIds) // Debug
 
-      await linkApi.updateOrder(updatedLinks)
-      setMessage('Ordem atualizada com sucesso')
+      const response = await linkApi.reorder({ links: linkIds })
+      
+      if (response.success) {
+        // Atualiza os estados com a nova ordem
+        const updatedLinks = pendingLinks.map((link, index) => ({
+          ...link,
+          order: index
+        }))
+        setLinks(updatedLinks)
+        setPendingLinks(updatedLinks)
+        showAlert('Ordem atualizada com sucesso', 'success')
+      }
     } catch (error) {
       console.error('Erro ao atualizar ordem:', error)
-      setMessage('Erro ao atualizar ordem')
+      showAlert('Erro ao atualizar ordem', 'error')
+      setPendingLinks(links) // Reverte para a ordem anterior
     }
   }
 
