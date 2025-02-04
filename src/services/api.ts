@@ -16,17 +16,26 @@ api.interceptors.request.use((config) => {
 })
 
 interface ProfileUpdateData {
-  backgroundColor?: string;
-  cardColor?: string;
-  textColor?: string;
-  cardTextColor?: string;
-  displayMode?: 'list' | 'grid';
-  cardStyle?: 'rounded' | 'square' | 'pill';
-  animation?: 'none' | 'fade' | 'slide' | 'bounce';
-  font?: 'default' | 'serif' | 'mono';
-  spacing?: number;
-  sortMode?: 'custom' | 'date' | 'name' | 'likes';
-  likesColor?: string;
+  profile: {
+    backgroundColor?: string;
+    cardColor?: string;
+    textColor?: string;
+    cardTextColor?: string;
+    displayMode?: 'list' | 'grid';
+    cardStyle?: 'rounded' | 'square' | 'pill';
+    animation?: 'none' | 'fade' | 'slide' | 'bounce';
+    font?: 'default' | 'serif' | 'mono';
+    spacing?: number;
+    sortMode?: 'custom' | 'date' | 'name' | 'likes';
+    likesColor?: string;
+  };
+  links?: Array<{
+    _id: string;
+    title: string;
+    url: string;
+    visible: boolean;
+    order: number;
+  }>;
 }
 
 interface LinkData {
@@ -68,21 +77,9 @@ export const userApi = {
   },
 
   updateProfile: async (data: ProfileUpdateData) => {
-    const response = await api.put('/api/users/profile', {
-      profile: {
-        backgroundColor: data.backgroundColor,
-        cardColor: data.cardColor,
-        textColor: data.textColor,
-        cardTextColor: data.cardTextColor,
-        displayMode: data.displayMode,
-        cardStyle: data.cardStyle,
-        animation: data.animation,
-        font: data.font,
-        spacing: data.spacing,
-        sortMode: data.sortMode,
-        likesColor: data.likesColor
-      }
-    })
+    console.log('Enviando dados para atualização:', data)
+    const response = await api.put('/api/users/profile', data)
+    console.log('Resposta da API:', response.data)
     return response.data
   },
 

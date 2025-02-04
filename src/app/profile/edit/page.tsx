@@ -360,77 +360,69 @@ export default function EditLinksPage() {
   const handleSaveChanges = async () => {
     try {
       setIsSaving(true)
-      console.log('Iniciando salvamento de alterações...')
+      
+      // Log dos estados antes do envio
+      console.log('Links atuais:', links)
+      console.log('Configurações atuais:', settings)
 
-      // Salva as configurações do perfil
-      const profileResponse = await userApi.updateProfile({
-        backgroundColor: settings.backgroundColor,
-        cardColor: settings.cardColor,
-        textColor: settings.textColor,
-        cardTextColor: settings.cardTextColor,
-        displayMode: settings.displayMode,
-        cardStyle: settings.cardStyle,
-        animation: settings.animation,
-        font: settings.font,
-        spacing: settings.spacing,
-        sortMode: settings.sortMode,
-        likesColor: settings.likesColor
-      })
-
-      if (!profileResponse.success) {
-        throw new Error('Erro ao salvar configurações do perfil')
+      // Prepara os dados para envio
+      const updateData = {
+        profile: {
+          backgroundColor: settings.backgroundColor,
+          cardColor: settings.cardColor,
+          textColor: settings.textColor,
+          cardTextColor: settings.cardTextColor,
+          displayMode: settings.displayMode,
+          cardStyle: settings.cardStyle,
+          animation: settings.animation,
+          font: settings.font,
+          spacing: settings.spacing,
+          sortMode: settings.sortMode,
+          likesColor: settings.likesColor
+        },
+        links: links.map(link => ({
+          _id: link.id,
+          title: link.title,
+          url: link.url,
+          visible: link.visible,
+          order: link.order
+        }))
       }
 
-      // Prepara as atualizações dos links que foram modificados
-      const linkUpdates = links.map(async (link) => {
-        const originalLink = pendingLinks.find(l => l.id === link.id)
+      // Log dos dados que serão enviados
+      console.log('Dados preparados para envio:', updateData)
+
+      // Faz a chamada à API
+      const response = await userApi.updateProfile(updateData)
+      console.log('Resposta da API:', response)
+
+      if (!response.success) {
+        throw new Error('Erro ao salvar alterações')
+      }
+
+      // Atualiza os estados com os dados retornados
+      if (response.data) {
+        const { links: updatedLinks, profile: updatedProfile } = response.data
         
-        // Verifica se o link foi modificado
-        if (
-          originalLink?.title !== link.title ||
-          originalLink?.url !== link.url ||
-          originalLink?.visible !== link.visible ||
-          originalLink?.order !== link.order
-        ) {
-          console.log('Atualizando link:', link)
-          const response = await linkApi.updateLink(link.id, {
+        if (updatedLinks) {
+          const formattedLinks = updatedLinks.map(link => ({
+            id: link._id,
             title: link.title,
             url: link.url,
             visible: link.visible,
-            order: link.order
-          })
-
-          if (!response.success) {
-            throw new Error(`Erro ao atualizar link ${link.id}`)
-          }
-
-          return response.data
+            order: link.order,
+            likes: link.likes || 0
+          }))
+          setLinks(formattedLinks)
+          setPendingLinks(formattedLinks)
         }
-        
-        // Se o link não foi modificado, retorna o link original
-        return link
-      })
 
-      // Aguarda todas as atualizações dos links
-      const updatedLinks = await Promise.all(linkUpdates)
-      console.log('Links atualizados:', updatedLinks)
+        if (updatedProfile) {
+          setSettings(updatedProfile)
+        }
+      }
 
-      // Atualiza o estado com os links atualizados
-      const formattedLinks = updatedLinks.map(link => ({
-        id: link._id || link.id,
-        title: link.title,
-        url: link.url,
-        visible: link.visible,
-        order: link.order,
-        createdAt: link.createdAt,
-        likes: link.likes || 0
-      }))
-
-      // Atualiza os estados sem fazer novo get
-      setLinks(formattedLinks)
-      setPendingLinks(formattedLinks)
       setHasChanges(false)
-
       setAlert({
         open: true,
         message: 'Todas as alterações foram salvas com sucesso',
