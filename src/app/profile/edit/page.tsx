@@ -12,7 +12,7 @@ import {
   Select, MenuItem, InputLabel, FormControl,
   ToggleButton, ToggleButtonGroup,
   Snackbar, Alert, Link as MuiLink,
-  IconButton, Divider, useTheme, useMediaQuery
+  IconButton, Divider, useTheme, useMediaQuery, Backdrop, CircularProgress
 } from '@mui/material'
 import { 
   DragHandle as DragIcon, 
@@ -185,7 +185,9 @@ function SortableCard({ link, onUpdate, onDelete }: any) {
               control={
                 <Switch
                   checked={link.visible}
-                  onChange={(e) => onUpdate(link.id, { visible: e.target.checked })}
+                  onChange={() => {
+                    handleUpdateLink(link.id, { visible: !link.visible })
+                  }}
                 />
               }
               label="Visível"
@@ -246,6 +248,7 @@ export default function EditLinksPage() {
     severity: 'success'
   })
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -328,33 +331,39 @@ export default function EditLinksPage() {
     }
   }
 
-  const handleUpdateLink = async (id: string, data: Partial<LinkItem>) => {
-    if (!id) return // Proteção contra id undefined
+  const handleUpdateLink = (id: string, data: Partial<LinkItem>) => {
+    if (!id) return
     
     try {
-      setLoading(true)
-      console.log('Atualizando link:', { id, data }) // Debug
-      const response = await linkApi.updateLink(id, data)
-      if (response.success) {
-        setLinks(links.map(link => 
-          link.id === id ? { ...link, ...data } : link
-        ))
-        setHasChanges(true)
-        setAlert({ open: true, message: 'Link atualizado com sucesso', severity: 'success' })
-      }
+      // Atualiza apenas o estado local
+      const updatedLinks = links.map(link => 
+        link.id === id 
+          ? { ...link, ...data }
+          : link
+      )
+
+      // Atualiza os estados locais
+      setLinks(updatedLinks)
+      setPendingLinks(updatedLinks)
+      setHasChanges(true) // Indica que há mudanças não salvas
+      
     } catch (error) {
       console.error('Erro ao atualizar link:', error)
-      setAlert({ open: true, message: 'Erro ao atualizar link', severity: 'error' })
-    } finally {
-      setLoading(false)
+      setAlert({
+        open: true,
+        message: 'Erro ao atualizar link',
+        severity: 'error'
+      })
     }
   }
 
   const handleSaveChanges = async () => {
     try {
-      setLoading(true)
-      // Envia apenas as configurações do perfil
-      const response = await userApi.updateProfile({
+      setIsSaving(true)
+      console.log('Iniciando salvamento de alterações...')
+
+      // Salva as configurações do perfil
+      const profileResponse = await userApi.updateProfile({
         backgroundColor: settings.backgroundColor,
         cardColor: settings.cardColor,
         textColor: settings.textColor,
@@ -368,18 +377,75 @@ export default function EditLinksPage() {
         likesColor: settings.likesColor
       })
 
-      if (response.success) {
-        setMessage('Alterações salvas com sucesso')
-        setAlert({ open: true, message: 'Alterações salvas com sucesso', severity: 'success' })
-      } else {
-        throw new Error('Erro ao salvar alterações')
+      if (!profileResponse.success) {
+        throw new Error('Erro ao salvar configurações do perfil')
       }
-    } catch (err) {
-      console.error('Erro ao salvar alterações:', err)
-      setMessage('Erro ao salvar alterações')
-      setAlert({ open: true, message: 'Erro ao salvar alterações', severity: 'error' })
+
+      // Prepara as atualizações dos links que foram modificados
+      const linkUpdates = links.map(async (link) => {
+        const originalLink = pendingLinks.find(l => l.id === link.id)
+        
+        // Verifica se o link foi modificado
+        if (
+          originalLink?.title !== link.title ||
+          originalLink?.url !== link.url ||
+          originalLink?.visible !== link.visible ||
+          originalLink?.order !== link.order
+        ) {
+          console.log('Atualizando link:', link)
+          const response = await linkApi.updateLink(link.id, {
+            title: link.title,
+            url: link.url,
+            visible: link.visible,
+            order: link.order
+          })
+
+          if (!response.success) {
+            throw new Error(`Erro ao atualizar link ${link.id}`)
+          }
+
+          return response.data
+        }
+        
+        // Se o link não foi modificado, retorna o link original
+        return link
+      })
+
+      // Aguarda todas as atualizações dos links
+      const updatedLinks = await Promise.all(linkUpdates)
+      console.log('Links atualizados:', updatedLinks)
+
+      // Atualiza o estado com os links atualizados
+      const formattedLinks = updatedLinks.map(link => ({
+        id: link._id || link.id,
+        title: link.title,
+        url: link.url,
+        visible: link.visible,
+        order: link.order,
+        createdAt: link.createdAt,
+        likes: link.likes || 0
+      }))
+
+      // Atualiza os estados sem fazer novo get
+      setLinks(formattedLinks)
+      setPendingLinks(formattedLinks)
+      setHasChanges(false)
+
+      setAlert({
+        open: true,
+        message: 'Todas as alterações foram salvas com sucesso',
+        severity: 'success'
+      })
+
+    } catch (error) {
+      console.error('Erro ao salvar alterações:', error)
+      setAlert({
+        open: true,
+        message: 'Erro ao salvar alterações. Por favor, tente novamente.',
+        severity: 'error'
+      })
     } finally {
-      setLoading(false)
+      setIsSaving(false)
     }
   }
 
@@ -619,6 +685,22 @@ export default function EditLinksPage() {
 
   return (
     <Container maxWidth="lg">
+      <Backdrop
+        sx={{ 
+          color: '#fff', 
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2
+        }}
+        open={isSaving}
+      >
+        <CircularProgress color="inherit" />
+        <Typography variant="h6" component="div">
+          Salvando alterações...
+        </Typography>
+      </Backdrop>
+
       <Box sx={{ py: 4 }}>
         <Typography variant="h4" gutterBottom>
           Editar Perfil
@@ -727,7 +809,9 @@ export default function EditLinksPage() {
                         control={
                           <Switch
                             checked={link.visible}
-                            onChange={(e) => handleUpdateLink(link.id, { visible: e.target.checked })}
+                            onChange={() => {
+                              handleUpdateLink(link.id, { visible: !link.visible })
+                            }}
                           />
                         }
                         label="Visível"
@@ -960,10 +1044,11 @@ export default function EditLinksPage() {
             variant="contained" 
             color="primary"
             onClick={handleSaveChanges}
-            disabled={loading}
+            disabled={isSaving || !hasChanges}
             fullWidth={isMobile}
+            startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : null}
           >
-            {loading ? 'Salvando...' : 'Salvar Alterações'}
+            {isSaving ? 'Salvando...' : 'Salvar Alterações'}
           </Button>
         </Box>
 
