@@ -192,46 +192,43 @@ export default function EditLinksPage() {
 
   // Carregar links
   useEffect(() => {
-    const loadLinks = async () => {
-      if (!user) return
-
+    const loadProfileData = async () => {
       try {
-        console.log('Carregando links...')
+        setLoading(true)
         const response = await userApi.getMyProfile()
-        console.log('Resposta do servidor:', response)
         
-        if (response.success && response.data.links) {
-          // Garantir que cada link tem todos os campos necessários
-          const formattedLinks = response.data.links.map((link: any, index: number) => ({
-            id: link._id || link.id, // Aceita ambos os formatos
+        if (response.success) {
+          const formattedLinks = response.data.links.map((link: any) => ({
+            id: link._id,
             title: link.title,
             url: link.url,
             visible: link.visible,
-            order: link.order || index, // Usa o índice como fallback
             createdAt: link.createdAt,
+            order: link.order,
             likes: link.likes || 0
           }))
+
+          setLinks(formattedLinks)
+          setPendingLinks(formattedLinks)
           
-          // Ordenar links por ordem
-          const sortedLinks = formattedLinks.sort((a: LinkItem, b: LinkItem) => a.order - b.order)
-          console.log('Links ordenados:', sortedLinks)
-          
-          setLinks(sortedLinks)
-          setPendingLinks(sortedLinks)
-          setError('')
-        } else {
-          console.log('Nenhum link encontrado ou formato inválido')
+          // Apenas atualizando as settings com as preferências do usuário
+          if (response.data.profile) {
+            setSettings(prevSettings => ({
+              ...prevSettings,
+              ...response.data.profile
+            }))
+          }
         }
       } catch (error) {
-        console.error('Erro ao carregar links:', error)
-        setError('Erro ao carregar seus links. Tente novamente.')
+        console.error('Erro ao carregar dados do perfil:', error)
+        setError('Erro ao carregar seus dados. Tente novamente.')
       } finally {
         setLoading(false)
       }
     }
 
-    loadLinks()
-  }, [user])
+    loadProfileData()
+  }, [])
 
   const handleAddLink = async () => {
     try {
@@ -266,8 +263,23 @@ export default function EditLinksPage() {
           likes: response.likes || 0
         }
 
+        setSettings({
+          backgroundColor: response.data.profile.backgroundColor,
+          cardColor: response.data.profile.cardColor,
+          textColor: response.data.profile.textColor,
+          cardTextColor: response.data.profile.cardTextColor,
+          displayMode: response.data.profile.displayMode,
+          cardStyle: response.data.profile.cardStyle,
+          animation: response.data.profile.animation,
+          font: response.data.profile.font,
+          spacing: response.data.profile.spacing,
+          sortMode: response.data.profile.sortMode,
+          likesColor: response.data.profile.likesColor
+        })
+
         // Atualizar os estados
         setLinks(prev => [...prev, createdLink])
+       
         setPendingLinks(prev => [...prev, createdLink])
         
         // Limpar o formulário e fechar o modal

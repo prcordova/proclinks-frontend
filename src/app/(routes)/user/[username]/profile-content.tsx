@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Container, Box, Typography, Link as MuiLink, CircularProgress } from '@mui/material'
-import { userApi, linkApi } from '@/services/api'
+import { userApi } from '@/services/api'
 import Avatar from '@mui/material/Avatar'
 
 interface UserProfile {
