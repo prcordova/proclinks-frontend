@@ -198,7 +198,7 @@ export function ProfileContent({ username }: { username: string }) {
             {links.map((link) => (
               <MuiLink
                 key={link._id}
-                href={link.url}
+                href={link.url.startsWith('http') ? link.url : `https://${link.url}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 sx={{
