@@ -116,10 +116,10 @@ export function Header() {
                 </MenuItem>
                 <MenuItem 
                   component={Link}
-                  href="/profile/settings"
+                  href="/plans"
                   onClick={handleClose}
                 >
-                  Configurações
+                  Planos e Preços
                 </MenuItem>
                 <MenuItem onClick={() => {
                   handleClose()
