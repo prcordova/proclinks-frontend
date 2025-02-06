@@ -6,6 +6,7 @@ import { userApi } from '@/services/api'
 import Avatar from '@mui/material/Avatar'
 import { useAuth } from '@/contexts/auth-context'
 import { FollowButton } from '@/components/follow-button'
+import { toast } from 'react-hot-toast'
 
 interface UserProfile {
   id: string
@@ -29,39 +30,53 @@ interface UserProfile {
   bio?: string
   avatar?: string
   userId: string
+  isFollowing: boolean
 }
 
 interface AuthUser extends UserProfile {
   _id: string
 }
 
+const BUTTON_TEXT = {
+  FOLLOW: 'Seguir',
+  UNFOLLOW: 'Deixar de Seguir',
+  LOADING: 'Carregando...'
+} as const
+
 export function ProfileContent({ username }: { username: string }) {
-  const { user: currentUser } = useAuth() as { user: AuthUser | null }
+  const { user: currentUser } = useAuth()
+  const [isLoading, setIsLoading] = useState(false)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [links, setLinks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Adicionar logs para debug
-  console.log('CurrentUser:', currentUser)
-  console.log('Profile:', profile)
+  const loadProfile = async () => {
+    try {
+      const profileData = await userApi.getPublicProfile(username)
+      const userId = profileData.data.avatar?.split('/users/')[1]?.split('/')[0]
+      
+      // Verificar se o usuário atual está seguindo o perfil
+      const isFollowing = Array.isArray(currentUser?.following) && 
+        currentUser?.following.includes(userId)
+      
+      console.log('Current User Following:', currentUser?.following)
+      console.log('Profile UserId:', userId)
+      console.log('Is Following:', isFollowing)
+      
+      setProfile({
+        ...profileData.data,
+        userId,
+        isFollowing // Garantindo que seja booleano
+      })
+      setLinks(profileData.data.links || [])
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const profileData = await userApi.getPublicProfile(username)
-        const userId = profileData.data.links[0]?.userId || profileData.data.userId
-        setProfile({
-          ...profileData.data,
-          userId
-        })
-        setLinks(profileData.data.links || [])
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     loadProfile()
   }, [username])
 
@@ -70,6 +85,37 @@ export function ProfileContent({ username }: { username: string }) {
     if (!avatarPath) return '/default-avatar.png'
     if (avatarPath.startsWith('http')) return avatarPath
     return `${process.env.NEXT_PUBLIC_API_URL}${avatarPath}`
+  }
+
+  const handleFollowClick = async () => {
+    try {
+      setIsLoading(true)
+      
+      if (profile?.isFollowing) {
+        await userApi.unfollowUser(profile.userId)
+        setProfile(prev => ({
+          ...prev!,
+          isFollowing: false,
+          followers: Math.max(0, prev!.followers - 1) // Garantir que não fique negativo
+        }))
+        toast.success('Deixou de seguir com sucesso!')
+      } else {
+        await userApi.followUser(profile!.userId)
+        setProfile(prev => ({
+          ...prev!,
+          isFollowing: true,
+          followers: prev!.followers + 1
+        }))
+        toast.success('Seguindo com sucesso!')
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Erro ao atualizar seguidor'
+      toast.error(errorMessage)
+      // Recarregar o perfil em caso de erro para garantir estado correto
+      loadProfile()
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (loading) {
@@ -182,21 +228,13 @@ export function ProfileContent({ username }: { username: string }) {
             </Typography>
           </Box>
 
-          {/* Botão de Seguir - Sempre visível exceto para o próprio perfil */}
-          {profile && (
-            <>
-              
-              <FollowButton 
-                userId={profile.userId || '67a16671b0f83d116da218ec'}
-                isFollowing={Array.isArray(profile.followers) && profile.followers.includes(currentUser?.id || '')}
-                onFollowChange={(following) => {
-                  setProfile(prev => ({
-                    ...prev!,
-                    followers: following ? prev!.followers + 1 : prev!.followers - 1
-                  }))
-                }}
-              />
-            </>
+          {/* Botão de Seguir - Não mostrar para o próprio perfil */}
+          {profile && currentUser && currentUser.id !== profile.userId && (
+            <FollowButton 
+              text={profile.isFollowing ? BUTTON_TEXT.UNFOLLOW : BUTTON_TEXT.FOLLOW}
+              isLoading={isLoading}
+              onClick={handleFollowClick}
+            />
           )}
         </Box>
         {/* Links Section */}

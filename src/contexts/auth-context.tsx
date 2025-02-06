@@ -13,6 +13,7 @@ interface User {
     status?: string
   }
   avatar?: string
+  following: string[]
 }
 
 interface AuthContextType {
@@ -45,7 +46,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             id: response.data.id,
             username: response.data.username,
             email: response.data.email,
-            avatar: response.data.avatar
+            avatar: response.data.avatar,
+            following: response.data.following
           })
         }
       } catch (error) {
@@ -68,7 +70,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: response.data.user.id,
           username: response.data.user.username,
           email: response.data.user.email,
-          avatar: response.data.user.avatar
+          avatar: response.data.user.avatar,
+          following: response.data.user.following
         })
         router.push('/profile')
       }
@@ -93,7 +96,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: response.data.user.id,
           username: response.data.user.username,
           email: response.data.user.email,
-          avatar: response.data.user.avatar
+          avatar: response.data.user.avatar,
+          following: response.data.user.following
         })
         router.push('/profile/edit')
       }
