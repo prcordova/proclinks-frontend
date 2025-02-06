@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { IconButton, Tooltip } from '@mui/material'
+import { IconButton, Tooltip, Avatar } from '@mui/material'
 import CameraAltIcon from '@mui/icons-material/CameraAlt'
 import { Button } from '@/components/ui/button'
 
@@ -9,11 +9,18 @@ interface AvatarUploadProps {
   currentAvatar: string
   onAvatarChange: (file: File) => Promise<void>
   isLoading?: boolean
+  username?: string
 }
 
-export function AvatarUpload({ currentAvatar, onAvatarChange, isLoading = false }: AvatarUploadProps) {
-  const [previewUrl, setPreviewUrl] = useState(currentAvatar)
+export function AvatarUpload({ 
+  currentAvatar, 
+  onAvatarChange, 
+  isLoading = false,
+  username = ''
+}: AvatarUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [imageError, setImageError] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,6 +29,7 @@ export function AvatarUpload({ currentAvatar, onAvatarChange, isLoading = false 
       const reader = new FileReader()
       reader.onloadend = () => {
         setPreviewUrl(reader.result as string)
+        setImageError(false)
       }
       reader.readAsDataURL(file)
       setSelectedFile(file)
@@ -34,33 +42,34 @@ export function AvatarUpload({ currentAvatar, onAvatarChange, isLoading = false 
     try {
       await onAvatarChange(selectedFile)
       setSelectedFile(null)
+      setPreviewUrl(null)
+      setImageError(false)
     } catch (error) {
       console.error('Erro ao salvar avatar:', error)
     }
   }
 
-  // Função para construir a URL completa do avatar
-  const getAvatarUrl = (avatarPath: string) => {
-    if (!avatarPath) return '/default-avatar.png'
-    if (avatarPath.startsWith('http')) return avatarPath
-    if (avatarPath.startsWith('data:')) return avatarPath // Para preview de arquivo local
-    return `${process.env.NEXT_PUBLIC_API_URL}${avatarPath}` // Usando a variável de ambiente
-  }
-
-  console.log('Avatar URL:', getAvatarUrl(previewUrl)) // Debug
+  const avatarUrl = previewUrl || 
+    (currentAvatar && !imageError 
+      ? `${process.env.NEXT_PUBLIC_API_URL}${currentAvatar}` 
+      : undefined)
 
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="relative inline-block">
-        <img
-          src={getAvatarUrl(previewUrl)}
-          alt="Avatar"
-          className="w-24 h-24 rounded-full border-4 border-primary object-cover"
-          onError={(e) => {
-            console.error('Erro ao carregar imagem:', e)
-            e.currentTarget.src = '/default-avatar.png'
+        <Avatar
+          src={avatarUrl}
+          onError={() => setImageError(true)}
+          sx={{ 
+            width: 96, 
+            height: 96,
+            border: 4,
+            borderColor: 'primary.main'
           }}
-        />
+        >
+          {username?.slice(0, 2).toUpperCase()}
+        </Avatar>
+        
         <Tooltip title="Alterar foto">
           <IconButton
             className="absolute bottom-0 right-0 bg-primary hover:bg-primary/90 text-white"
@@ -71,6 +80,7 @@ export function AvatarUpload({ currentAvatar, onAvatarChange, isLoading = false 
             <CameraAltIcon fontSize="small" />
           </IconButton>
         </Tooltip>
+        
         <input
           type="file"
           ref={fileInputRef}
