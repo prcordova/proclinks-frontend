@@ -1,0 +1,62 @@
+'use client'
+
+import { useEffect, useState } from "react"
+import { userApi } from "@/services/api"
+import { UserCard } from "@/components/user-card"
+import toast from "react-hot-toast"
+
+interface User {
+  id: string
+  username: string
+  name: string
+  avatar?: string
+}
+
+export default function FollowersPage({ params }: { params: { username: string } }) {
+  const [followers, setFollowers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadFollowers() {
+      try {
+        // Primeiro, vamos garantir que temos o perfil do usuário
+        const { data: profile } = await userApi.getPublicProfile(params.username)
+        
+        if (!profile || !profile.id) {
+          throw new Error('Perfil não encontrado')
+        }
+
+        // Agora sim buscamos os seguidores usando o ID do perfil
+        const { data: followersData } = await userApi.getFollowersFromUser(profile.id)
+        setFollowers(followersData.data || []) // Ajustando para pegar data.data da resposta
+      } catch (error) {
+        console.error('Erro ao carregar seguidores:', error)
+        toast.error('Erro ao carregar seguidores')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadFollowers()
+  }, [params.username])
+
+  if (loading) {
+    return <div>Carregando seguidores...</div>
+  }
+
+  return (
+    <div className="container max-w-2xl py-6 space-y-6">
+      <h1 className="text-2xl font-bold">Seguidores de @{params.username}</h1>
+      
+      <div className="space-y-4">
+        {followers.length === 0 ? (
+          <p className="text-center text-muted-foreground">Nenhum seguidor ainda</p>
+        ) : (
+          followers.map((user) => (
+            <UserCard key={user.id} user={user} />
+          ))
+        )}
+      </div>
+    </div>
+  )
+}

@@ -136,6 +136,26 @@ export const userApi = {
   getFollowStats: async (userId: string) => {
     const response = await api.get(`/users/${userId}/follow-stats`)
     return response.data
+  },
+
+  getFollowersFromUser: async (userId: string) => {
+    try {
+      const response = await api.get(`/api/users/${userId}/followers`)
+      return response.data
+    } catch (error) {
+      console.error('Erro ao buscar seguidores:', error)
+      throw error
+    }
+  },
+
+  getFollowingFromUser: async (userId: string) => {
+    try {
+      const response = await api.get(`/api/users/${userId}/following`)
+      return response.data
+    } catch (error) {
+      console.error('Erro ao buscar usuários seguidos:', error)
+      throw error
+    }
   }
 }
 
