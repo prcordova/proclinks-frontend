@@ -157,14 +157,14 @@ export function Header() {
                 {user.plan?.type === 'FREE' ? (
                   <MenuItem onClick={() => {
                     handleClose()
-                    router.push('/settings')
+                    router.push('/plans')
                   }}>
                     Fazer Upgrade
                   </MenuItem>
                 ) : (
                   <MenuItem 
                     component={Link}
-                    href="/settings"
+                    href="/plans"
                     onClick={handleClose}
                   >
                     Gerenciar Plano

@@ -13,10 +13,11 @@ import {
 } from '@mui/icons-material'
 
 const plans = [
+ 
   {
     name: 'Bronze',
     icon: <StarIcon sx={{ fontSize: 40 }} />,
-    price: 'R$ 19,90',
+    price: 'R$ 9,90',
     color: '#CD7F32',
     features: [
       'Até 5 links',
@@ -29,7 +30,7 @@ const plans = [
   {
     name: 'Prata',
     icon: <PremiumIcon sx={{ fontSize: 40 }} />,
-    price: 'R$ 29,90',
+    price: 'R$ 19,90',
     color: '#C0C0C0',
     features: [
       'Até 10 links',
@@ -43,7 +44,7 @@ const plans = [
   {
     name: 'Gold',
     icon: <DiamondIcon sx={{ fontSize: 40 }} />,
-    price: 'R$ 49,90',
+    price: 'R$ 29,90',
     color: '#FFD700',
     features: [
       'Até 50 links',

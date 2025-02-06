@@ -8,6 +8,10 @@ interface User {
   id: string
   username: string
   email: string
+  plan?: {
+    type: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
+    status?: string
+  }
   avatar?: string
 }
 
