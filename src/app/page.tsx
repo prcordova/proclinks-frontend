@@ -24,7 +24,7 @@ export default function Home() {
                 </Button>
               </Link>
               <Link href="/explore">
-                <Button variant="outline" size="lg">Explorar páginas</Button>
+                <Button variant="outline" size="lg">Explorar perfis</Button>
               </Link>
             </div>
           </div>

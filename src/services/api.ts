@@ -102,6 +102,15 @@ export const userApi = {
       }
     })
     return response.data
+  },
+
+  listUsers: (params: { 
+    page: number
+    limit: number
+    filter: string
+    search?: string 
+  }) => {
+    return api.get('/api/users', { params })
   }
 }
 
