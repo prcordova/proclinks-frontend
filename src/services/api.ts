@@ -117,6 +117,25 @@ export const userApi = {
     search?: string 
   }) => {
     return api.get('/api/users', { params })
+  },
+
+  followUser: async (userId: string) => {
+    console.log('Trying to follow user with ID:', userId)
+    if (!userId) throw new Error('UserId is required')
+    const response = await api.post(`/api/users/${userId}/follow`)
+    return response.data
+  },
+
+  unfollowUser: async (userId: string) => {
+    console.log('Trying to unfollow user with ID:', userId)
+    if (!userId) throw new Error('UserId is required')
+    const response = await api.delete(`/api/users/${userId}/follow`)
+    return response.data
+  },
+
+  getFollowStats: async (userId: string) => {
+    const response = await api.get(`/users/${userId}/follow-stats`)
+    return response.data
   }
 }
 

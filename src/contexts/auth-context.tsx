@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { authApi, userApi } from '@/services/api'
 
 interface User {
-  id: string
+  _id: string
   username: string
   email: string
   plan?: {

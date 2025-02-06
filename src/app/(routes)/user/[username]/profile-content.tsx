@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react'
 import { Container, Box, Typography, Link as MuiLink, CircularProgress } from '@mui/material'
 import { userApi } from '@/services/api'
 import Avatar from '@mui/material/Avatar'
+import { useAuth } from '@/contexts/auth-context'
+import { FollowButton } from '@/components/follow-button'
 
 interface UserProfile {
-  _id: string
+  id: string
   username: string
   profile: {
     backgroundColor: string
@@ -26,18 +28,32 @@ interface UserProfile {
   links: any[]
   bio?: string
   avatar?: string
+  userId: string
+}
+
+interface AuthUser extends UserProfile {
+  _id: string
 }
 
 export function ProfileContent({ username }: { username: string }) {
+  const { user: currentUser } = useAuth() as { user: AuthUser | null }
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [links, setLinks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Adicionar logs para debug
+  console.log('CurrentUser:', currentUser)
+  console.log('Profile:', profile)
 
   useEffect(() => {
     const loadProfile = async () => {
       try {
         const profileData = await userApi.getPublicProfile(username)
-        setProfile(profileData.data)
+        const userId = profileData.data.links[0]?.userId || profileData.data.userId
+        setProfile({
+          ...profileData.data,
+          userId
+        })
         setLinks(profileData.data.links || [])
       } catch (error) {
         console.error('Erro ao carregar dados:', error)
@@ -165,8 +181,24 @@ export function ProfileContent({ username }: { username: string }) {
               <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>Seguindo</span>
             </Typography>
           </Box>
-        </Box>
 
+          {/* Botão de Seguir - Sempre visível exceto para o próprio perfil */}
+          {profile && (
+            <>
+              
+              <FollowButton 
+                userId={profile.userId || '67a16671b0f83d116da218ec'}
+                isFollowing={Array.isArray(profile.followers) && profile.followers.includes(currentUser?.id || '')}
+                onFollowChange={(following) => {
+                  setProfile(prev => ({
+                    ...prev!,
+                    followers: following ? prev!.followers + 1 : prev!.followers - 1
+                  }))
+                }}
+              />
+            </>
+          )}
+        </Box>
         {/* Links Section */}
         {links.length === 0 ? (
           <Box sx={{ 
