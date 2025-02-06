@@ -18,6 +18,7 @@ interface User {
 interface AuthContextType {
   user: User | null
   login: (username: string, password: string) => Promise<void>
+  register: (userData: any) => Promise<void>
   logout: () => void
   loading: boolean
 }
@@ -83,8 +84,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/login')
   }
 
+  const register = async (userData: any) => {
+    try {
+      const response = await authApi.register(userData)
+      if (response.success) {
+        localStorage.setItem('token', response.data.token)
+        setUser({
+          id: response.data.user.id,
+          username: response.data.user.username,
+          email: response.data.user.email,
+          avatar: response.data.user.avatar
+        })
+        router.push('/profile/edit')
+      }
+    } catch (error) {
+      console.error('Erro no registro:', error)
+      throw error
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, register }}>
       {children}
     </AuthContext.Provider>
   )

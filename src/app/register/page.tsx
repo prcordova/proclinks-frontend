@@ -1,62 +1,99 @@
 'use client'
 
-import { Input } from "@/components/ui/input"
 import { useState } from "react"
-import { Button, Container, Typography, Box, Divider, Paper } from '@mui/material'
+import { 
+  Button, Container, Typography, Box, Divider, Paper,
+  TextField
+} from '@mui/material'
 import GitHubIcon from '@mui/icons-material/GitHub'
 import GoogleIcon from '@mui/icons-material/Google'
 import FacebookIcon from '@mui/icons-material/Facebook'
 import { authApi } from "@/services/api"
 import { useRouter } from "next/navigation"
 import Link from 'next/link'
+import { useAuth } from "@/contexts/auth-context"
 
 export default function RegisterPage() {
-  const router = useRouter()
+  const { register } = useAuth()
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    cpf: '',
+    phone: ''
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
+
+  const formatCPF = (value: string) => {
+    const numbers = value.replace(/\D/g, '')
+    return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/g, '$1.$2.$3-$4')
+  }
+
+  const formatPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, '')
+    return numbers.replace(/(\d{2})(\d{5})(\d{4})/g, '($1) $2-$3')
+  }
+
+  const handleChange = (field: keyof typeof formData) => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    let value = e.target.value
+
+    if (field === 'cpf') {
+      value = value.replace(/\D/g, '').slice(0, 11)
+      value = formatCPF(value)
+    }
+    
+    if (field === 'phone') {
+      value = value.replace(/\D/g, '').slice(0, 11)
+      value = formatPhone(value)
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setLoading(true)
 
     if (formData.password !== formData.confirmPassword) {
       setError('As senhas não coincidem')
       return
     }
 
-    setLoading(true)
+    const cleanCpf = formData.cpf.replace(/\D/g, '')
+    const cleanPhone = formData.phone.replace(/\D/g, '')
+
+    if (cleanCpf.length !== 11) {
+      setError('CPF inválido')
+      return
+    }
+
+    if (cleanPhone.length < 10 || cleanPhone.length > 11) {
+      setError('Telefone inválido')
+      return
+    }
 
     try {
-      const { token, user } = await authApi.register({
+      await register({
         username: formData.username,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        cpf: cleanCpf,
+        phone: cleanPhone
       })
-      
-      localStorage.setItem('token', token)
-      localStorage.setItem('currentUser', user.username)
-      router.push('/profile/edit')
     } catch (err: any) {
-      console.error(err)
-      setError(err.response?.data?.message || 'Erro ao criar conta. Tente novamente.')
+      setError(err.response?.data?.message || 'Erro ao criar conta')
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleChange = (field: keyof typeof formData) => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: e.target.value
-    }))
   }
 
   const handleSocialLogin = async (provider: string) => {
@@ -72,11 +109,7 @@ export default function RegisterPage() {
         justifyContent: 'center',
         py: 4
       }}>
-        <Paper elevation={3} sx={{ 
-          p: 4, 
-          borderRadius: 2,
-          bgcolor: 'background.paper'
-        }}>
+        <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
           <Typography 
             component="h1" 
             variant="h4" 
@@ -107,7 +140,7 @@ export default function RegisterPage() {
           )}
 
           <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-            <Input
+            <TextField
               margin="normal"
               required
               fullWidth
@@ -116,7 +149,7 @@ export default function RegisterPage() {
               onChange={handleChange('username')}
               disabled={loading}
             />
-            <Input
+            <TextField
               margin="normal"
               required
               fullWidth
@@ -126,7 +159,29 @@ export default function RegisterPage() {
               onChange={handleChange('email')}
               disabled={loading}
             />
-            <Input
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              label="CPF"
+              value={formData.cpf}
+              onChange={handleChange('cpf')}
+              disabled={loading}
+              inputProps={{ maxLength: 14 }}
+              placeholder="000.000.000-00"
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              label="Telefone"
+              value={formData.phone}
+              onChange={handleChange('phone')}
+              disabled={loading}
+              inputProps={{ maxLength: 15 }}
+              placeholder="(00) 00000-0000"
+            />
+            <TextField
               margin="normal"
               required
               fullWidth
@@ -136,7 +191,7 @@ export default function RegisterPage() {
               onChange={handleChange('password')}
               disabled={loading}
             />
-            <Input
+            <TextField
               margin="normal"
               required
               fullWidth

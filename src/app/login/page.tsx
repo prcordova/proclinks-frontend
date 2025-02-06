@@ -27,17 +27,10 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      console.log('Enviando dados:', formData) // Debug
-      const response = await authApi.login(formData.username, formData.password)
-      
-      if (response.success) {
-        localStorage.setItem('token', response.data.token)
-        router.push('/profile')
-      } else {
-        setError(response.message || 'Erro ao fazer login')
-      }
+      await login(formData.username, formData.password)
+      // O redirecionamento já é feito no contexto
     } catch (error: any) {
-      console.error('Erro no login:', error.response?.data || error)
+      console.error('Erro no login:', error)
       setError(error.response?.data?.message || 'Erro ao fazer login')
     } finally {
       setLoading(false)
