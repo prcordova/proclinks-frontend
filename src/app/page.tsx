@@ -23,7 +23,7 @@ export default function Home() {
                   Criar minha página
                 </Button>
               </Link>
-              <Link href="/explore">
+              <Link href="/explorer">
                 <Button variant="outline" size="lg">Explorar perfis</Button>
               </Link>
             </div>
