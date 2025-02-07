@@ -16,31 +16,11 @@ import { userApi } from '@/services/api'
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined'
 import { CustomAvatar } from '@/components/avatar'
 
-const PLAN_BORDERS = {
-  FREE: 'none',
-  BRONZE: '2px solid #CD7F32',
-  SILVER: '2px solid #C0C0C0',
-  GOLD: '2px solid #FFD700'
-}
-
 export function Header() {
   const { mode, setMode } = useThemeContext()
   const { user, logout } = useAuth()
   const router = useRouter()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (user?.id) {
-      userApi.getMyProfile()
-        .then(response => {
-          if (response.data?.avatar) {
-            setAvatarUrl(`${process.env.NEXT_PUBLIC_API_URL}${response.data.avatar}`)
-          }
-        })
-        .catch(error => console.error('Erro ao buscar perfil:', error))
-    }
-  }, [user?.id])
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
@@ -48,17 +28,6 @@ export function Header() {
 
   const handleClose = () => {
     setAnchorEl(null)
-  }
-
-  const getInitials = (username: string) => {
-    return username.slice(0, 2).toUpperCase()
-  }
-
-  const getBorderStyle = () => {
-    const planType = user?.plan?.type || 'FREE'
-    return {
-      border: PLAN_BORDERS[planType]
-    }
   }
 
   return (
@@ -108,10 +77,10 @@ export function Header() {
                 <Tooltip title={`${user.username} - ${user.plan?.type || 'Plano Gratuito'}`}>
                   <IconButton onClick={handleMenu}>
                     <CustomAvatar
-                      src={user?.avatar || null}
-                      username={user?.username}
+                      src={user.avatar || null}
+                      username={user.username}
                       size={35}
-                      planType={user?.plan?.type || 'FREE'}
+                      planType={user.plan?.type || 'FREE'}
                     />
                   </IconButton>
                 </Tooltip>

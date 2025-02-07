@@ -68,11 +68,19 @@ export default function ExplorerPage() {
         Explorar Perfis
       </Typography>
 
-      <Box sx={{ display: 'flex', gap: 4 }}>
-        <ExplorerSidebar
-          selectedFilter={selectedFilter}
-          onFilterChange={setSelectedFilter}
-        />
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', md: 'row' },
+        gap: 4 
+      }}>
+        <Box sx={{ 
+          width: { xs: '100%', md: 'auto' }
+        }}>
+          <ExplorerSidebar
+            selectedFilter={selectedFilter}
+            onFilterChange={setSelectedFilter}
+          />
+        </Box>
 
         <Box sx={{ flex: 1 }}>
           <Box sx={{ mb: 6 }}>

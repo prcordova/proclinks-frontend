@@ -156,7 +156,12 @@ export const userApi = {
       console.error('Erro ao buscar usuários seguidos:', error)
       throw error
     }
-  }
+  },
+
+  getHeaderInfo: async () => {
+    const response = await api.get('/api/users/header-info')
+    return response.data
+  },
 }
 
 export const linkApi = {

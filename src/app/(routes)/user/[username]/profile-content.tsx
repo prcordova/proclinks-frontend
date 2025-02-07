@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Container, Box, Typography, Link as MuiLink, CircularProgress } from '@mui/material'
+import { Container, Box, Typography, Link as MuiLink, CircularProgress, IconButton } from '@mui/material'
 import { userApi } from '@/services/api'
 import Avatar from '@mui/material/Avatar'
 import { useAuth } from '@/contexts/auth-context'
@@ -9,6 +9,8 @@ import { FollowButton } from '@/components/follow-button'
 import { toast } from 'react-hot-toast'
 import Link from 'next/link'
 import { CustomAvatar } from '@/components/avatar'
+import { useRouter } from 'next/navigation'
+import EditIcon from '@mui/icons-material/Edit'
 
 interface UserProfile {
   id: string
@@ -52,6 +54,7 @@ const BUTTON_TEXT = {
 
 export function ProfileContent({ username }: { username: string }) {
   const { user: currentUser } = useAuth()
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [links, setLinks] = useState<any[]>([])
@@ -183,20 +186,34 @@ export function ProfileContent({ username }: { username: string }) {
             @{profile.username}
           </Typography>
 
-          {/* Bio se existir */}
-          {profile.bio && (
+          {/* Bio com botão de edição */}
+          <Box sx={{ 
+            mt: 2, 
+            display: 'flex', 
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1
+          }}>
             <Typography 
-              variant="body1"
-              align="center"
               sx={{ 
                 color: profile.profile.textColor,
-                mt: 1,
-                maxWidth: '600px'
+                fontStyle: profile.bio ? 'normal' : 'italic'
               }}
             >
-              {profile.bio}
+              {profile.bio || 'Sem bio'}
             </Typography>
-          )}
+            
+            {/* Mostra o botão se o usuário logado está vendo seu próprio perfil */}
+            {currentUser?.username === username && (
+              <IconButton 
+                onClick={() => router.push('/profile/edit')}
+                size="small"
+                sx={{ color: profile.profile.textColor }}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            )}
+          </Box>
 
           {/* Followers/Following */}
           <Box sx={{ 

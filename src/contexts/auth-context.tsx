@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation'
 import { authApi, userApi } from '@/services/api'
 
 interface User {
-  _id: string
+  id: string
   username: string
   email: string
   plan?: {
     type: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
-    status?: string
+    status: string
+    features?: any
   }
   avatar?: string
   following: string[]
@@ -47,7 +48,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             username: response.data.username,
             email: response.data.email,
             avatar: response.data.avatar,
-            following: response.data.following
+            following: response.data.following,
+            plan: response.data.plan
           })
         }
       } catch (error) {
@@ -67,11 +69,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.success) {
         localStorage.setItem('token', response.data.token)
         setUser({
-          id: response.data.user.id,
+          id: response.data.user._id,
           username: response.data.user.username,
           email: response.data.user.email,
           avatar: response.data.user.avatar,
-          following: response.data.user.following
+          following: response.data.user.following,
+          plan: response.data.user.plan
         })
         router.push('/profile')
       }
@@ -93,11 +96,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.success) {
         localStorage.setItem('token', response.data.token)
         setUser({
-          id: response.data.user.id,
+          id: response.data.user._id,
           username: response.data.user.username,
           email: response.data.user.email,
           avatar: response.data.user.avatar,
-          following: response.data.user.following
+          following: response.data.user.following,
+          plan: response.data.user.plan
         })
         router.push('/profile/edit')
       }
