@@ -7,6 +7,7 @@ import Avatar from '@mui/material/Avatar'
 import { useAuth } from '@/contexts/auth-context'
 import { FollowButton } from '@/components/follow-button'
 import { toast } from 'react-hot-toast'
+import Link from 'next/link'
 
 interface UserProfile {
   id: string
@@ -211,8 +212,13 @@ export function ProfileContent({ username }: { username: string }) {
                 alignItems: 'center'
               }}
             >
-              <span style={{ fontWeight: 'bold' }}>{profile.followers}</span>
-              <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>Seguidores</span>
+              <span style={{ fontWeight: 'bold' }}>{profile.following}</span>
+              <Link 
+          href={`/user/${username}/following`}
+          className="text-primary hover:underline"
+        >
+         Seguindo
+        </Link>
             </Typography>
 
             <Typography 
@@ -223,9 +229,15 @@ export function ProfileContent({ username }: { username: string }) {
                 alignItems: 'center'
               }}
             >
-              <span style={{ fontWeight: 'bold' }}>{profile.following}</span>
-              <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>Seguindo</span>
-            </Typography>
+              <span style={{ fontWeight: 'bold' }}>{profile.followers}</span>
+ 
+              <Link 
+          href={`/user/${username}/followers`}
+          className="text-primary hover:underline"
+        >
+          Seguidores
+        </Link>
+             </Typography>
           </Box>
 
           {/* Botão de Seguir - Não mostrar para o próprio perfil */}
