@@ -1,9 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Container, Box, Typography, Link as MuiLink, CircularProgress, IconButton } from '@mui/material'
 import { userApi } from '@/services/api'
-import Avatar from '@mui/material/Avatar'
 import { useAuth } from '@/contexts/auth-context'
 import { FollowButton } from '@/components/follow-button'
 import { toast } from 'react-hot-toast'
@@ -11,6 +10,27 @@ import Link from 'next/link'
 import { CustomAvatar } from '@/components/avatar'
 import { useRouter } from 'next/navigation'
 import EditIcon from '@mui/icons-material/Edit'
+import { AxiosError } from 'axios'
+
+interface UserLink {
+  _id: string
+  title: string
+  url: string
+  visible: boolean
+  order: number
+  likes: number
+  userId: string
+  createdAt: string
+  updatedAt: string
+}
+
+interface PlanFeatures {
+  maxLinks: number
+  customization: boolean
+  analytics: boolean
+  priority: boolean
+  support: 'basic' | 'priority' | 'vip'
+}
 
 interface UserProfile {
   id: string
@@ -30,7 +50,7 @@ interface UserProfile {
   }
   followers: number
   following: number
-  links: any[]
+  links: UserLink[]
   bio?: string
   avatar?: string
   userId: string
@@ -38,12 +58,8 @@ interface UserProfile {
   plan?: {
     type: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
     status: string
-    features: any
+    features: PlanFeatures
   }
-}
-
-interface AuthUser extends UserProfile {
-  _id: string
 }
 
 const BUTTON_TEXT = {
@@ -57,25 +73,21 @@ export function ProfileContent({ username }: { username: string }) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [links, setLinks] = useState<any[]>([])
+  const [links, setLinks] = useState<UserLink[]>([])
   const [loading, setLoading] = useState(true)
 
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     try {
       const profileData = await userApi.getPublicProfile(username)
-      console.log('Profile Data:', profileData) // Verificar se o plano está vindo
+      console.log('Profile Data:', profileData)
       
       const userId = profileData.data.avatar?.split('/users/')[1]?.split('/')[0]
-      
-      // Verificar se o usuário atual está seguindo o perfil
-      const isFollowing = Array.isArray(currentUser?.following) && 
-        currentUser?.following.includes(userId)
       
       setProfile({
         ...profileData.data,
         userId,
-        isFollowing,
-        plan: profileData.data.plan // Garantir que o plano está sendo incluído no estado
+        isFollowing: Array.isArray(currentUser?.following) && 
+          currentUser?.following.includes(userId)
       })
       setLinks(profileData.data.links || [])
     } catch (error) {
@@ -83,18 +95,11 @@ export function ProfileContent({ username }: { username: string }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [username, currentUser?.following])
 
   useEffect(() => {
     loadProfile()
-  }, [username])
-
-  // Função para construir a URL completa do avatar
-  const getAvatarUrl = (avatarPath: string | null) => {
-    if (!avatarPath) return '/default-avatar.png'
-    if (avatarPath.startsWith('http')) return avatarPath
-    return `${process.env.NEXT_PUBLIC_API_URL}${avatarPath}`
-  }
+  }, [username, loadProfile])
 
   const handleFollowClick = async () => {
     try {
@@ -117,10 +122,10 @@ export function ProfileContent({ username }: { username: string }) {
         }))
         toast.success('Seguindo com sucesso!')
       }
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Erro ao atualizar seguidor'
+    } catch (error) {
+      const err = error as AxiosError<{ message: string }>
+      const errorMessage = err.response?.data?.message || 'Erro ao atualizar seguidor'
       toast.error(errorMessage)
-      // Recarregar o perfil em caso de erro para garantir estado correto
       loadProfile()
     } finally {
       setIsLoading(false)
