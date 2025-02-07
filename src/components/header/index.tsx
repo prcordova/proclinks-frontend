@@ -10,24 +10,17 @@ import { useThemeContext } from '@/contexts/theme-context'
 import { useAuth } from '@/contexts/auth-context'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 import LightModeIcon from '@mui/icons-material/LightMode'
- import Link from 'next/link'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { userApi } from '@/services/api'
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined'
+import { CustomAvatar } from '@/components/avatar'
 
-const PLAN_STYLES = {
-  FREE: {
-    border: 'none'
-  },
-  BRONZE: {
-    border: '2px solid #CD7F32'
-  },
-  SILVER: {
-    border: '2px solid #C0C0C0'
-  },
-  GOLD: {
-    border: '2px solid #FFD700'
-  }
+const PLAN_BORDERS = {
+  FREE: 'none',
+  BRONZE: '2px solid #CD7F32',
+  SILVER: '2px solid #C0C0C0',
+  GOLD: '2px solid #FFD700'
 }
 
 export function Header() {
@@ -61,8 +54,11 @@ export function Header() {
     return username.slice(0, 2).toUpperCase()
   }
 
-  const getPlanStyle = () => {
-    return PLAN_STYLES[user?.plan?.type || 'FREE']
+  const getBorderStyle = () => {
+    const planType = user?.plan?.type || 'FREE'
+    return {
+      border: PLAN_BORDERS[planType]
+    }
   }
 
   return (
@@ -111,16 +107,12 @@ export function Header() {
               <>
                 <Tooltip title={`${user.username} - ${user.plan?.type || 'Plano Gratuito'}`}>
                   <IconButton onClick={handleMenu}>
-                    <Avatar 
-                      src={avatarUrl || undefined}
-                      sx={{ 
-                        width: 35,
-                        height: 35,
-                        ...getPlanStyle()
-                      }}
-                    >
-                      {!avatarUrl && getInitials(user.username)}
-                    </Avatar>
+                    <CustomAvatar
+                      src={user?.avatar || null}
+                      username={user?.username}
+                      size={35}
+                      planType={user?.plan?.type || 'FREE'}
+                    />
                   </IconButton>
                 </Tooltip>
                 <Menu

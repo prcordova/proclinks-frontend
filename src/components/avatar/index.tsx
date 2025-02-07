@@ -1,27 +1,49 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { IconButton, Tooltip, Avatar } from '@mui/material'
+import { IconButton, Tooltip, Avatar as MuiAvatar, Box } from '@mui/material'
 import CameraAltIcon from '@mui/icons-material/CameraAlt'
 import { Button } from '@/components/ui/button'
 
-interface AvatarUploadProps {
-  currentAvatar: string
-  onAvatarChange: (file: File) => Promise<void>
-  isLoading?: boolean
+interface CustomAvatarProps {
+  src: string | null
   username?: string
+  size?: number
+  planType?: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
+  borderColor?: string
+  editable?: boolean
+  onAvatarChange?: (file: File) => Promise<void>
+  isLoading?: boolean
 }
 
-export function AvatarUpload({ 
-  currentAvatar, 
-  onAvatarChange, 
-  isLoading = false,
-  username = ''
-}: AvatarUploadProps) {
+const PLAN_BORDERS = {
+  FREE: 'none',
+  BRONZE: '2px solid #CD7F32',
+  SILVER: '2px solid #C0C0C0',
+  GOLD: '2px solid #FFD700'
+}
+
+export function CustomAvatar({
+  src,
+  username = '',
+  size = 96,
+  planType = 'FREE',
+  borderColor,
+  editable = false,
+  onAvatarChange,
+  isLoading = false
+}: CustomAvatarProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [imageError, setImageError] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const getBorderStyle = () => {
+    if (planType === 'GOLD' && borderColor) {
+      return `2px solid ${borderColor}`
+    }
+    return PLAN_BORDERS[planType]
+  }
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -37,7 +59,7 @@ export function AvatarUpload({
   }
 
   const handleSave = async () => {
-    if (!selectedFile) return
+    if (!selectedFile || !onAvatarChange) return
 
     try {
       await onAvatarChange(selectedFile)
@@ -50,25 +72,32 @@ export function AvatarUpload({
   }
 
   const avatarUrl = previewUrl || 
-    (currentAvatar && !imageError 
-      ? `${process.env.NEXT_PUBLIC_API_URL}${currentAvatar}` 
+    (src && !imageError 
+      ? `${process.env.NEXT_PUBLIC_API_URL}${src}` 
       : undefined)
 
+  const AvatarComponent = (
+    <MuiAvatar
+      src={avatarUrl}
+      onError={() => setImageError(true)}
+      sx={{ 
+        width: size, 
+        height: size,
+        border: getBorderStyle()
+      }}
+    >
+      {username?.slice(0, 2).toUpperCase()}
+    </MuiAvatar>
+  )
+
+  if (!editable) {
+    return AvatarComponent
+  }
+
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="relative inline-block">
-        <Avatar
-          src={avatarUrl}
-          onError={() => setImageError(true)}
-          sx={{ 
-            width: 96, 
-            height: 96,
-            border: 4,
-            borderColor: 'primary.main'
-          }}
-        >
-          {username?.slice(0, 2).toUpperCase()}
-        </Avatar>
+    <Box className="flex flex-col items-center gap-4">
+      <Box className="relative inline-block">
+        {AvatarComponent}
         
         <Tooltip title="Alterar foto">
           <IconButton
@@ -88,16 +117,18 @@ export function AvatarUpload({
           accept="image/*"
           onChange={handleFileChange}
         />
-      </div>
+      </Box>
 
-      <Button
-        onClick={handleSave}
-        disabled={isLoading || !selectedFile}
-        className="mt-2"
-        variant="outline"
-      >
-        {isLoading ? 'Salvando...' : selectedFile ? 'Salvar foto' : 'Nenhuma alteração'}
-      </Button>
-    </div>
+      {selectedFile && (
+        <Button
+          onClick={handleSave}
+          disabled={isLoading}
+          className="mt-2"
+          variant="outline"
+        >
+          {isLoading ? 'Salvando...' : 'Salvar foto'}
+        </Button>
+      )}
+    </Box>
   )
 } 

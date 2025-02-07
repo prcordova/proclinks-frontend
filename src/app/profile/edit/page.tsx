@@ -26,7 +26,7 @@ import {
  
  
  import { useThemeContext } from '@/contexts/theme-context'
-import { AvatarEdit } from './avatar-edit'
+ import { CustomAvatar } from '@/components/avatar'
   
 interface LinkItem {
   id: string
@@ -172,6 +172,7 @@ export default function EditLinksPage() {
   const [isSaving, setIsSaving] = useState(false)
   const { mode, setMode } = useThemeContext()
    const [profileData, setProfileData] = useState<ProfileData | null>(null)
+  const [isAvatarLoading, setIsAvatarLoading] = useState(false)
 
  
 
@@ -248,38 +249,23 @@ export default function EditLinksPage() {
       const response = await linkApi.createLink({
         title: newLink.title,
         url: newLink.url,
-        isPublic: newLink.visible
+        visible: newLink.visible
       })
 
-      if (response) {
+      if (response.success) {
         // Formatar o novo link para o formato esperado
         const createdLink: LinkItem = {
-          id: response._id,
-          title: response.title,
-          url: response.url,
-          visible: response.isPublic,
-          createdAt: response.createdAt,
-          order: response.order || 0,
-          likes: response.likes || 0
+          id: response.data._id,
+          title: response.data.title,
+          url: response.data.url,
+          visible: response.data.visible,
+          createdAt: response.data.createdAt,
+          order: response.data.order || 0,
+          likes: response.data.likes || 0
         }
-
-        setSettings({
-          backgroundColor: response.data.profile.backgroundColor,
-          cardColor: response.data.profile.cardColor,
-          textColor: response.data.profile.textColor,
-          cardTextColor: response.data.profile.cardTextColor,
-          displayMode: response.data.profile.displayMode,
-          cardStyle: response.data.profile.cardStyle,
-          animation: response.data.profile.animation,
-          font: response.data.profile.font,
-          spacing: response.data.profile.spacing,
-          sortMode: response.data.profile.sortMode,
-          likesColor: response.data.profile.likesColor
-        })
 
         // Atualizar os estados
         setLinks(prev => [...prev, createdLink])
-       
         setPendingLinks(prev => [...prev, createdLink])
         
         // Limpar o formulário e fechar o modal
@@ -295,14 +281,30 @@ export default function EditLinksPage() {
         
         // Indicar que há mudanças não salvas
         setHasChanges(true)
+      } else {
+        // Se a resposta não foi bem sucedida, mostrar a mensagem de erro da API
+        throw new Error(response.message)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar link:', error)
-      setAlert({
-        open: true,
-        message: 'Erro ao adicionar link',
-        severity: 'error'
-      })
+      
+      // Verificar se é um erro relacionado ao limite do plano
+      if (error.response?.data?.currentPlan) {
+        const planInfo = error.response.data.currentPlan
+        setAlert({
+          open: true,
+          message: `Limite do plano ${planInfo.type} atingido (${planInfo.currentLinks}/${planInfo.maxLinks} links). Faça um upgrade para adicionar mais links.`,
+          severity: 'error'
+        })
+        // Fechar o modal quando for erro de limite de plano
+        setOpenNewLinkDialog(false)
+      } else {
+        setAlert({
+          open: true,
+          message: error.response?.data?.message || 'Erro ao adicionar link',
+          severity: 'error'
+        })
+      }
     } finally {
       setLoading(false)
     }
@@ -665,6 +667,32 @@ export default function EditLinksPage() {
     }
   }
 
+  const handleAvatarChange = async (file: File) => {
+    try {
+      setIsAvatarLoading(true)
+      const response = await userApi.updateAvatar(file)
+      if (response.success) {
+        // Atualiza o avatar no estado do perfil
+        setProfileData(prev => ({
+          ...prev,
+          avatar: response.avatarUrl
+        }))
+        // Atualiza o contexto do usuário se necessário
+        // updateUserContext({ ...user, avatar: response.avatarUrl })
+      }
+    } catch (error) {
+      console.error('Erro ao fazer upload do avatar:', error)
+      setAlert({
+        open: true,
+        message: 'Erro ao atualizar foto de perfil',
+        severity: 'error'
+      })
+      throw error
+    } finally {
+      setIsAvatarLoading(false)
+    }
+  }
+
   if (loading || !profileData) {
     return (
       <Box sx={{ 
@@ -907,9 +935,14 @@ export default function EditLinksPage() {
               }}>
                 <Card>
                   <CardContent>
-                    <AvatarEdit
-                      currentAvatar={profileData?.avatar}
-                      onAvatarUpdated={handleAvatarUpdated}
+                    <CustomAvatar
+                      src={profileData?.avatar}
+                      username={user?.username}
+                      planType={user?.plan?.type}
+                      borderColor={user?.plan?.type === 'GOLD' ? avatarBorderColor : undefined}
+                      editable={true}
+                      onAvatarChange={handleAvatarChange}
+                      isLoading={isAvatarLoading}
                     />
                     
                     <Divider sx={{ my: 3 }} />
@@ -1183,7 +1216,7 @@ export default function EditLinksPage() {
 
         <Dialog
           open={openNewLinkDialog}
-          onClose={() => setOpenNewLinkDialog(false)}
+          onClose={() => !loading && setOpenNewLinkDialog(false)}
           maxWidth="sm"
           fullWidth
         >
@@ -1195,18 +1228,25 @@ export default function EditLinksPage() {
                 value={newLink.title}
                 onChange={(e) => setNewLink(prev => ({ ...prev, title: e.target.value }))}
                 fullWidth
+                disabled={loading}
+                error={!newLink.title}
+                helperText={!newLink.title ? 'Título é obrigatório' : ''}
               />
               <TextField
                 label="URL"
                 value={newLink.url}
                 onChange={(e) => setNewLink(prev => ({ ...prev, url: e.target.value }))}
                 fullWidth
+                disabled={loading}
+                error={!newLink.url}
+                helperText={!newLink.url ? 'URL é obrigatória' : ''}
               />
               <FormControlLabel
                 control={
                   <Switch
                     checked={newLink.visible}
                     onChange={(e) => setNewLink(prev => ({ ...prev, visible: e.target.checked }))}
+                    disabled={loading}
                   />
                 }
                 label="Visível"
@@ -1224,6 +1264,7 @@ export default function EditLinksPage() {
               onClick={handleAddLink}
               disabled={loading || !newLink.title || !newLink.url}
               variant="contained"
+              startIcon={loading ? <CircularProgress size={20} /> : null}
             >
               {loading ? 'Adicionando...' : 'Adicionar'}
             </Button>

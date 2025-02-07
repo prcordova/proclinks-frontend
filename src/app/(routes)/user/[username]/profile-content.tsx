@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { FollowButton } from '@/components/follow-button'
 import { toast } from 'react-hot-toast'
 import Link from 'next/link'
+import { CustomAvatar } from '@/components/avatar'
 
 interface UserProfile {
   id: string
@@ -32,6 +33,11 @@ interface UserProfile {
   avatar?: string
   userId: string
   isFollowing: boolean
+  plan?: {
+    type: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
+    status: string
+    features: any
+  }
 }
 
 interface AuthUser extends UserProfile {
@@ -54,20 +60,19 @@ export function ProfileContent({ username }: { username: string }) {
   const loadProfile = async () => {
     try {
       const profileData = await userApi.getPublicProfile(username)
+      console.log('Profile Data:', profileData) // Verificar se o plano está vindo
+      
       const userId = profileData.data.avatar?.split('/users/')[1]?.split('/')[0]
       
       // Verificar se o usuário atual está seguindo o perfil
       const isFollowing = Array.isArray(currentUser?.following) && 
         currentUser?.following.includes(userId)
       
-      console.log('Current User Following:', currentUser?.following)
-      console.log('Profile UserId:', userId)
-      console.log('Is Following:', isFollowing)
-      
       setProfile({
         ...profileData.data,
         userId,
-        isFollowing // Garantindo que seja booleano
+        isFollowing,
+        plan: profileData.data.plan // Garantir que o plano está sendo incluído no estado
       })
       setLinks(profileData.data.links || [])
     } catch (error) {
@@ -147,18 +152,13 @@ export function ProfileContent({ username }: { username: string }) {
           mb: 4,
           gap: 2
         }}>
-          {/* Avatar */}
-          <Avatar
-            src={getAvatarUrl(profile.avatar)}
-            alt={profile.username}
-            sx={{ 
-              width: 120,
-              height: 120,
-              mb: 2,
-              border: '4px solid',
-              borderColor: profile.profile.textColor,
-              backgroundColor: profile.profile.cardColor
-            }}
+          {/* Avatar atualizado */}
+          <CustomAvatar
+            src={profile.avatar || null}
+            username={profile.username}
+            size={120}
+            planType={profile.plan?.type || 'FREE'}
+            editable={false}
           />
 
           {/* Username */}
