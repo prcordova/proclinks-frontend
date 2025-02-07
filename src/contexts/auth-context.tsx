@@ -4,6 +4,14 @@ import { createContext, useContext, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { authApi, userApi } from '@/services/api'
 
+interface PlanFeatures {
+  maxLinks: number
+  customization: boolean
+  analytics: boolean
+  priority: boolean
+  support: 'basic' | 'priority' | 'vip'
+}
+
 interface User {
   id: string
   username: string
@@ -11,16 +19,47 @@ interface User {
   plan?: {
     type: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
     status: string
-    features?: any
+    features: PlanFeatures
   }
   avatar?: string
   following: string[]
 }
 
+interface RegisterUserData {
+  username: string
+  email: string
+  password: string
+  cpf: string
+  phone: string
+  confirmPassword?: string
+}
+
+interface ApiResponse<T> {
+  success: boolean
+  data: T
+  message?: string
+}
+
+interface AuthResponse {
+  token: string
+  user: {
+    _id: string
+    username: string
+    email: string
+    avatar?: string
+    following: string[]
+    plan?: {
+      type: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
+      status: string
+      features: PlanFeatures
+    }
+  }
+}
+
 interface AuthContextType {
   user: User | null
   login: (username: string, password: string) => Promise<void>
-  register: (userData: any) => Promise<void>
+  register: (userData: RegisterUserData) => Promise<void>
   logout: () => void
   loading: boolean
 }
@@ -90,18 +129,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/login')
   }
 
-  const register = async (userData: any) => {
+  const register = async (userData: RegisterUserData) => {
     try {
       const response = await authApi.register(userData)
-      if (response.success) {
-        localStorage.setItem('token', response.data.token)
+      const data = response.data as ApiResponse<AuthResponse>
+      if (data.success) {
+        localStorage.setItem('token', data.data.token)
         setUser({
-          id: response.data.user._id,
-          username: response.data.user.username,
-          email: response.data.user.email,
-          avatar: response.data.user.avatar,
-          following: response.data.user.following,
-          plan: response.data.user.plan
+          id: data.data.user._id,
+          username: data.data.user.username,
+          email: data.data.user.email,
+          avatar: data.data.user.avatar,
+          following: data.data.user.following,
+          plan: data.data.user.plan
         })
         router.push('/profile/edit')
       }

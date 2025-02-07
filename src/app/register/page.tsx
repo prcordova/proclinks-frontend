@@ -8,10 +8,9 @@ import {
 import GitHubIcon from '@mui/icons-material/GitHub'
 import GoogleIcon from '@mui/icons-material/Google'
 import FacebookIcon from '@mui/icons-material/Facebook'
-import { authApi } from "@/services/api"
-import { useRouter } from "next/navigation"
 import Link from 'next/link'
 import { useAuth } from "@/contexts/auth-context"
+import { AxiosError } from 'axios'
 
 export default function RegisterPage() {
   const { register } = useAuth()
@@ -25,8 +24,7 @@ export default function RegisterPage() {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
-
+ 
   const formatCPF = (value: string) => {
     const numbers = value.replace(/\D/g, '')
     return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/g, '$1.$2.$3-$4')
@@ -89,8 +87,9 @@ export default function RegisterPage() {
         cpf: cleanCpf,
         phone: cleanPhone
       })
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao criar conta')
+    } catch (err) {
+      const error = err as AxiosError<{ message: string }>
+      setError(error.response?.data?.message || 'Erro ao criar conta')
     } finally {
       setLoading(false)
     }

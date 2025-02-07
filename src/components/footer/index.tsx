@@ -1,8 +1,7 @@
 'use client'
 
-import { Box, Container, Typography, Link as MuiLink, IconButton } from '@mui/material'
-import Link from 'next/link'
-import GitHubIcon from '@mui/icons-material/GitHub'
+import { Box, Container, Typography,   IconButton } from '@mui/material'
+ import GitHubIcon from '@mui/icons-material/GitHub'
 import LinkedInIcon from '@mui/icons-material/LinkedIn'
 import TwitterIcon from '@mui/icons-material/Twitter'
 

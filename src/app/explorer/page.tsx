@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { 
   Container, Typography, TextField, InputAdornment,
-  Box, Grid, Alert
+  Box, Grid, Alert, Button
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import { ExplorerSidebar, FilterOption } from '@/components/explorer-sidebar'
@@ -11,10 +11,21 @@ import { UserCard } from '@/components/user-card'
 import { userApi } from '@/services/api'
 import { useDebounce } from '@/hooks/useDebounce'
 
+interface User {
+  _id: string
+  username: string
+  avatar?: string
+  bio?: string
+  plan: {
+    type: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
+    status: string
+  }
+}
+
 export default function ExplorerPage() {
   const [users, setUsers] = useState<{
-    searchResults: any[];
-    featuredUsers: any[];
+    searchResults: User[]
+    featuredUsers: User[]
   }>({
     searchResults: [],
     featuredUsers: []
@@ -35,10 +46,10 @@ export default function ExplorerPage() {
         search
       })
       
-      setUsers({
-        searchResults: response.data.searchResults || [],
-        featuredUsers: response.data.featuredUsers || []
-      })
+      setUsers(prev => ({
+        searchResults: pageNum === 1 ? response.data.searchResults : [...prev.searchResults, ...response.data.searchResults],
+        featuredUsers: response.data.featuredUsers
+      }))
       setHasMore(response.data.hasMore)
     } catch (error) {
       console.error('Erro ao buscar usuários:', error)
@@ -55,7 +66,7 @@ export default function ExplorerPage() {
   useEffect(() => {
     setPage(1)
     fetchUsers(1, selectedFilter, searchQuery)
-  }, [selectedFilter])
+  }, [selectedFilter, searchQuery])
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value)
@@ -119,7 +130,7 @@ export default function ExplorerPage() {
                   </Grid>
                 ) : (
                   <Alert severity="info">
-                    Nenhum usuário encontrado com "{searchQuery}"
+                    Nenhum usuário encontrado com &ldquo;{searchQuery}&rdquo;
                   </Alert>
                 )}
               </Box>
@@ -138,6 +149,21 @@ export default function ExplorerPage() {
               ))}
             </Grid>
           </Box>
+
+          {hasMore && (
+            <Box sx={{ textAlign: 'center', mt: 4 }}>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  setPage(prev => prev + 1)
+                  fetchUsers(page + 1, selectedFilter, searchQuery)
+                }}
+                disabled={loading}
+              >
+                {loading ? 'Carregando...' : 'Carregar mais'}
+              </Button>
+            </Box>
+          )}
         </Box>
       </Box>
     </Container>

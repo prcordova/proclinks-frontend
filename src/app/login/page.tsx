@@ -6,13 +6,11 @@ import GitHubIcon from '@mui/icons-material/GitHub'
 import GoogleIcon from '@mui/icons-material/Google'
 import FacebookIcon from '@mui/icons-material/Facebook'
 import { Input } from "@/components/ui/input"
-import { authApi } from "@/services/api"
-import { useRouter } from "next/navigation"
 import Link from 'next/link'
 import { useAuth } from '@/contexts/auth-context'
+import { AxiosError } from 'axios'
 
 export default function LoginPage() {
-  const router = useRouter()
   const { login } = useAuth()
   const [formData, setFormData] = useState({
     username: '',
@@ -29,9 +27,10 @@ export default function LoginPage() {
     try {
       await login(formData.username, formData.password)
       // O redirecionamento já é feito no contexto
-    } catch (error: any) {
-      console.error('Erro no login:', error)
-      setError(error.response?.data?.message || 'Erro ao fazer login')
+    } catch (error) {
+      const err = error as AxiosError<{ message: string }>
+      console.error('Erro no login:', err)
+      setError(err.response?.data?.message || 'Erro ao fazer login')
     } finally {
       setLoading(false)
     }
@@ -44,10 +43,6 @@ export default function LoginPage() {
       ...prev,
       [field]: e.target.value
     }))
-  }
-
-  const handleSocialLogin = async (provider: string) => {
-    console.log(`Login com ${provider}`)
   }
 
   return (

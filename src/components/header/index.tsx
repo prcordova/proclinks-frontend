@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState  } from 'react'
 import { 
   AppBar, Toolbar, Typography, Button, IconButton, Box,
-  Avatar, Menu, MenuItem, 
+   Menu, MenuItem, 
   Tooltip, Container
 } from '@mui/material'
 import { useThemeContext } from '@/contexts/theme-context'
@@ -12,8 +12,7 @@ import DarkModeIcon from '@mui/icons-material/DarkMode'
 import LightModeIcon from '@mui/icons-material/LightMode'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { userApi } from '@/services/api'
-import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined'
+ import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined'
 import { CustomAvatar } from '@/components/avatar'
 
 export function Header() {

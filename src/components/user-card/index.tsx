@@ -4,6 +4,18 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import FavoriteIcon from '@mui/icons-material/Favorite'
 import Link from 'next/link'
 
+interface User {
+  username: string
+  avatar?: string
+  bio?: string
+  followers?: string[]
+  following?: string[]
+  totalLikes?: number
+  plan?: {
+    type: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
+  }
+}
+
 const getPlanStyle = (planType?: string) => {
   switch (planType) {
     case 'GOLD':
@@ -17,7 +29,7 @@ const getPlanStyle = (planType?: string) => {
   }
 }
 
-export function UserCard({ user }: { user: any }) {
+export function UserCard({ user }: { user: User }) {
   return (
     <Link href={`/user/${user.username}`} style={{ textDecoration: 'none' }}>
       <Card sx={{ 
