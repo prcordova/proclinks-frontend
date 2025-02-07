@@ -19,16 +19,9 @@ export default function FollowersPage({ params }: { params: { username: string }
   useEffect(() => {
     async function loadFollowers() {
       try {
-        // Primeiro, vamos garantir que temos o perfil do usuário
-        const { data: profile } = await userApi.getPublicProfile(params.username)
-        
-        if (!profile || !profile.id) {
-          throw new Error('Perfil não encontrado')
-        }
-
-        // Agora sim buscamos os seguidores usando o ID do perfil
-        const { data: followersData } = await userApi.getFollowersFromUser(profile.id)
-        setFollowers(followersData.data || []) // Ajustando para pegar data.data da resposta
+        const followersResponse = await userApi.getFollowersFromUser(params.username)
+        const followersData = followersResponse.data?.data || []
+        setFollowers(followersData)
       } catch (error) {
         console.error('Erro ao carregar seguidores:', error)
         toast.error('Erro ao carregar seguidores')

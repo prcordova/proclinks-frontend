@@ -138,9 +138,9 @@ export const userApi = {
     return response.data
   },
 
-  getFollowersFromUser: async (userId: string) => {
+  getFollowersFromUser: async (username: string) => {
     try {
-      const response = await api.get(`/api/users/${userId}/followers`)
+      const response = await api.get(`/api/users/${username}/followers`)
       return response.data
     } catch (error) {
       console.error('Erro ao buscar seguidores:', error)
