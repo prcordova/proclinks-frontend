@@ -19,14 +19,12 @@ import {
   Delete as DeleteIcon,
   Add as AddIcon,
   Sort as SortIcon,
- 
   Favorite as HeartIcon,
   FavoriteBorder as HeartOutlineIcon
 } from '@mui/icons-material'
  
  
- import { useThemeContext } from '@/contexts/theme-context'
- import { CustomAvatar } from '@/components/avatar'
+  import { CustomAvatar } from '@/components/avatar'
   
 interface LinkItem {
   id: string
@@ -78,7 +76,29 @@ interface DeleteDialogState {
   linkId: string | null
 }
 
- 
+interface ProfileData {
+  username: string
+  avatar?: string
+  bio?: string
+  followers: string[]
+  following: string[]
+}
+
+interface LinkData {
+  title: string
+  url: string
+  visible: boolean
+}
+
+interface ApiLink {
+  _id: string
+  title: string
+  url: string
+  visible: boolean
+  createdAt: string
+  order: number
+  likes?: number
+}
 
 const ColorPickerField = ({ 
   label, 
@@ -129,13 +149,13 @@ const ColorPickerField = ({
   </Box>
 )
 
- 
+const avatarBorderColor = '#FFD700' // Cor dourada para borda do avatar
+
 export default function EditLinksPage() {
-  const { user, loading: authLoading } = useAuth()
-   const [links, setLinks] = useState<LinkItem[]>([])
+  const { user } = useAuth()
+  const [links, setLinks] = useState<LinkItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [openNewLinkDialog, setOpenNewLinkDialog] = useState(false)
+   const [openNewLinkDialog, setOpenNewLinkDialog] = useState(false)
   const [newLink, setNewLink] = useState<NewLinkData>({
     title: '',
     url: '',
@@ -163,7 +183,7 @@ export default function EditLinksPage() {
     likesColor: '#ff0000',
     bio: '',
   })
-  const [message, setMessage] = useState('')
+  const [message] = useState('')
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const isTablet = useMediaQuery(theme.breakpoints.down('lg'))
@@ -174,11 +194,8 @@ export default function EditLinksPage() {
   })
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-  const { mode, setMode } = useThemeContext()
-   const [profileData, setProfileData] = useState<ProfileData | null>(null)
+  const [profileData, setProfileData] = useState<ProfileData | null>(null)
   const [isAvatarLoading, setIsAvatarLoading] = useState(false)
-
- 
 
   useEffect(() => {
     async function loadProfile() {
@@ -203,7 +220,7 @@ export default function EditLinksPage() {
         const response = await userApi.getMyProfile()
         
         if (response.success) {
-          const formattedLinks = response.data.links.map((link: any) => ({
+          const formattedLinks = response.data.links.map((link: ApiLink) => ({
             id: link._id,
             title: link.title,
             url: link.url,
@@ -227,8 +244,7 @@ export default function EditLinksPage() {
         }
       } catch (error) {
         console.error('Erro ao carregar dados do perfil:', error)
-        setError('Erro ao carregar seus dados. Tente novamente.')
-      } finally {
+       } finally {
         setLoading(false)
       }
     }
@@ -255,7 +271,7 @@ export default function EditLinksPage() {
         title: newLink.title,
         url: newLink.url,
         visible: newLink.visible
-      })
+      } as LinkData)
 
       if (response.success) {
         // Formatar o novo link para o formato esperado
@@ -290,25 +306,30 @@ export default function EditLinksPage() {
         // Se a resposta não foi bem sucedida, mostrar a mensagem de erro da API
         throw new Error(response.message)
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao criar link:', error)
       
-      // Verificar se é um erro relacionado ao limite do plano
-      if (error.response?.data?.currentPlan) {
-        const planInfo = error.response.data.currentPlan
-        setAlert({
-          open: true,
-          message: `Limite do plano ${planInfo.type} atingido (${planInfo.currentLinks}/${planInfo.maxLinks} links). Faça um upgrade para adicionar mais links.`,
-          severity: 'error'
-        })
-        // Fechar o modal quando for erro de limite de plano
-        setOpenNewLinkDialog(false)
-      } else {
-        setAlert({
-          open: true,
-          message: error.response?.data?.message || 'Erro ao adicionar link',
-          severity: 'error'
-        })
+      if (error instanceof Error) {
+        // Verificar se é um erro relacionado ao limite do plano
+        if (error.message.includes('currentPlan')) {
+          const match = error.message.match(/\{.*\}/)
+          if (match) {
+            const planInfo = JSON.parse(match[0])
+            setAlert({
+              open: true,
+              message: `Limite do plano ${planInfo.type} atingido (${planInfo.currentLinks}/${planInfo.maxLinks} links). Faça um upgrade para adicionar mais links.`,
+              severity: 'error'
+            })
+            // Fechar o modal quando for erro de limite de plano
+            setOpenNewLinkDialog(false)
+          }
+        } else {
+          setAlert({
+            open: true,
+            message: error.message,
+            severity: 'error'
+          })
+        }
       }
     } finally {
       setLoading(false)
@@ -380,7 +401,7 @@ export default function EditLinksPage() {
         const { links: updatedLinks, profile: updatedProfile } = response.data
         
         if (updatedLinks) {
-          const formattedLinks = updatedLinks.map(link => ({
+          const formattedLinks = updatedLinks.map((link: ApiLink) => ({
             id: link._id,
             title: link.title,
             url: link.url,
@@ -649,19 +670,7 @@ export default function EditLinksPage() {
     setAlert({ ...alert, open: false })
   }
 
-  const handleAvatarUpdated = (newAvatarUrl: string) => {
-    if (profileData) {
-      setProfileData({
-        ...profileData,
-        avatar: newAvatarUrl
-      })
-      setAlert({
-        open: true,
-        message: 'Avatar atualizado com sucesso',
-        severity: 'success'
-      })
-    }
-  }
+ 
 
   const handleAvatarChange = async (file: File) => {
     try {
@@ -669,10 +678,10 @@ export default function EditLinksPage() {
       const response = await userApi.updateAvatar(file)
       if (response.success) {
         // Atualiza o avatar no estado do perfil
-        setProfileData(prev => ({
+        setProfileData(prev => prev ? {
           ...prev,
           avatar: response.avatarUrl
-        }))
+        } : null)
         // Atualiza o contexto do usuário se necessário
         // updateUserContext({ ...user, avatar: response.avatarUrl })
       }
@@ -688,48 +697,7 @@ export default function EditLinksPage() {
       setIsAvatarLoading(false)
     }
   }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSaving(true)
-
-    try {
-      const response = await userApi.updateProfile({
-        profile: {
-          backgroundColor: settings.backgroundColor,
-          cardColor: settings.cardColor,
-          textColor: settings.textColor,
-          cardTextColor: settings.cardTextColor,
-          displayMode: settings.displayMode,
-          cardStyle: settings.cardStyle,
-          animation: settings.animation,
-          font: settings.font,
-          spacing: settings.spacing,
-          likesColor: settings.likesColor,
-          sortMode: settings.sortMode,
-        },
-        bio: settings.bio
-      })
-
-      if (response.success) {
-        setAlert({
-          open: true,
-          message: 'Perfil atualizado com sucesso!',
-          severity: 'success'
-        })
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar perfil:', error)
-      setAlert({
-        open: true,
-        message: 'Erro ao atualizar perfil',
-        severity: 'error'
-      })
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
+ 
   if (loading || !profileData) {
     return (
       <Box sx={{ 
@@ -964,7 +932,7 @@ export default function EditLinksPage() {
               <Card>
                 <CardContent>
                   <CustomAvatar
-                    src={profileData?.avatar}
+                    src={profileData?.avatar || null}
                     username={user?.username}
                     planType={user?.plan?.type}
                     borderColor={user?.plan?.type === 'GOLD' ? avatarBorderColor : undefined}

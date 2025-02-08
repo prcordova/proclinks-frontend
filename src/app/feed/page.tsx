@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react'
 import { 
   Container, Box, Typography, Paper, Grid,
   Card, CardContent, Button, TextField,
-  Divider
-} from '@mui/material'
+ } from '@mui/material'
 import { useRouter } from 'next/navigation'
 import MailOutlineIcon from '@mui/icons-material/MailOutline'
 
