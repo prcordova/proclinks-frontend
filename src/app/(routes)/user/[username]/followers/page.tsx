@@ -12,11 +12,11 @@ interface User {
   avatar?: string
 }
 
-interface Props {
+export default function FollowersPage({
+  params,
+}: {
   params: { username: string }
-}
-
-function FollowersPage({ params }: Props) {
+}) {
   const [followers, setFollowers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -57,5 +57,3 @@ function FollowersPage({ params }: Props) {
     </div>
   )
 }
-
-export default FollowersPage
