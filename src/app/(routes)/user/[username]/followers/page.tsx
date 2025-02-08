@@ -6,6 +6,7 @@ import { UserCard } from "@/components/user-card"
 import toast from "react-hot-toast"
  
 
+
 interface User {
   id: string
   username: string
@@ -13,13 +14,11 @@ interface User {
   avatar?: string
 }
 
-interface FollowersPageProps {
-  params: { username: string }
-}
+ 
 
 
+export default function FollowersPage({ params }: { params: { username: string } }) {
 
-export default function FollowersPage({ params }: FollowersPageProps) {
   const [followers, setFollowers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
 
