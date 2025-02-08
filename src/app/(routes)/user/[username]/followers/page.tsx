@@ -12,14 +12,11 @@ interface User {
   avatar?: string
 }
 
-type PageProps = {
-  params: {
-    username: string
-  }
-  searchParams?: { [key: string]: string | string[] | undefined }
+interface Props {
+  params: { username: string }
 }
 
-const FollowersPage = ({ params }: PageProps) => {
+function FollowersPage({ params }: Props) {
   const [followers, setFollowers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
 
