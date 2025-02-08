@@ -12,10 +12,14 @@ interface User {
   avatar?: string
 }
 
+type PageParams = {
+  username: string
+}
+
 export default function FollowersPage({ 
   params 
 }: { 
-  params: { username: string }
+  params: PageParams | Promise<PageParams>
 }) {
   const [followers, setFollowers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
@@ -23,7 +27,8 @@ export default function FollowersPage({
   useEffect(() => {
     async function loadFollowers() {
       try {
-        const followersResponse = await userApi.getFollowersFromUser(params.username)
+        const resolvedParams = await Promise.resolve(params)
+        const followersResponse = await userApi.getFollowersFromUser(resolvedParams.username)
         const followersData = followersResponse.data?.data || []
         setFollowers(followersData)
       } catch (error) {
@@ -35,15 +40,17 @@ export default function FollowersPage({
     }
 
     loadFollowers()
-  }, [params.username])
+  }, [params])
 
   if (loading) {
     return <div>Carregando seguidores...</div>
   }
 
+  const username = params instanceof Promise ? '...' : params.username
+
   return (
     <div className="container max-w-2xl py-6 space-y-6">
-      <h1 className="text-2xl font-bold">Seguidores de @{params.username}</h1>
+      <h1 className="text-2xl font-bold">Seguidores de @{username}</h1>
       
       <div className="space-y-4">
         {followers.length === 0 ? (
