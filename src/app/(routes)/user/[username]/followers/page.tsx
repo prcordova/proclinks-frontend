@@ -12,14 +12,13 @@ interface User {
   avatar?: string
 }
 
-interface PageParams {
+interface PageProps {
   params: {
     username: string
   }
-  searchParams: { [key: string]: string | string[] | undefined }
 }
 
-export default function FollowersPage({ params }: PageParams) {
+export default function FollowersPage({ params }: PageProps) {
   const [followers, setFollowers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
 
