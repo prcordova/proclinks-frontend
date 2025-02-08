@@ -12,23 +12,20 @@ interface User {
   avatar?: string
 }
 
-type PageParams = {
-  username: string
+interface Props {
+  params: {
+    username: string
+  }
 }
 
-export default function FollowersPage({ 
-  params 
-}: { 
-  params: PageParams | Promise<PageParams>
-}) {
+export default function FollowersPage({ params }: Props) {
   const [followers, setFollowers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadFollowers() {
       try {
-        const resolvedParams = await Promise.resolve(params)
-        const followersResponse = await userApi.getFollowersFromUser(resolvedParams.username)
+        const followersResponse = await userApi.getFollowersFromUser(params.username)
         const followersData = followersResponse.data?.data || []
         setFollowers(followersData)
       } catch (error) {
@@ -40,13 +37,13 @@ export default function FollowersPage({
     }
 
     loadFollowers()
-  }, [params])
+  }, [params.username])
 
   if (loading) {
     return <div>Carregando seguidores...</div>
   }
 
-  const username = params instanceof Promise ? '...' : params.username
+  const username = params.username
 
   return (
     <div className="container max-w-2xl py-6 space-y-6">
