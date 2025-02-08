@@ -1,7 +1,10 @@
 import { ProfileContent } from './profile-content'
 
 // Server Component
-export default async function UserLinksPage({ params }: { params: Promise<{ username: string }> }) {
-  const resolvedParams = await params
-  return <ProfileContent username={resolvedParams.username} />
+export default async function UserLinksPage({ 
+  params 
+}: { 
+  params: { username: string }
+}) {
+  return <ProfileContent username={params.username} />
 }

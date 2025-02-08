@@ -4,8 +4,6 @@ import { useEffect, useState } from "react"
 import { userApi } from "@/services/api"
 import { UserCard } from "@/components/user-card"
 import toast from "react-hot-toast"
- 
-
 
 interface User {
   id: string
@@ -14,11 +12,11 @@ interface User {
   avatar?: string
 }
 
- 
-
-
-export default function FollowersPage({ params }: { params: { username: string } }) {
-
+export default function FollowersPage({ 
+  params 
+}: { 
+  params: { username: string }
+}) {
   const [followers, setFollowers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
 
