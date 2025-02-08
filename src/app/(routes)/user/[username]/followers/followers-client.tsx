@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { userApi } from "@/services/api"
 import { UserCard } from "@/components/user-card"
 import toast from "react-hot-toast"
+import { use } from 'react'
 
 interface User {
   id: string
@@ -12,18 +13,17 @@ interface User {
   avatar?: string
 }
 
-interface FollowersClientProps {
-  username: string
-}
+type Params = Promise<{ username: string }>
 
-export default function FollowersClient({ username }: FollowersClientProps) {
+export default function FollowersClient(props: { params: Params }) {
+  const params = use(props.params)
   const [followers, setFollowers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadFollowers() {
       try {
-        const followersResponse = await userApi.getFollowersFromUser(username)
+        const followersResponse = await userApi.getFollowersFromUser(params.username)
         const followersData = followersResponse.data?.data || []
         setFollowers(followersData)
       } catch (error) {
@@ -35,7 +35,7 @@ export default function FollowersClient({ username }: FollowersClientProps) {
     }
 
     loadFollowers()
-  }, [username])
+  }, [params.username])
 
   if (loading) {
     return <div>Carregando seguidores...</div>
@@ -43,7 +43,7 @@ export default function FollowersClient({ username }: FollowersClientProps) {
 
   return (
     <div className="container max-w-2xl py-6 space-y-6">
-      <h1 className="text-2xl font-bold">Seguidores de @{username}</h1>
+      <h1 className="text-2xl font-bold">Seguidores de @{params.username}</h1>
       
       <div className="space-y-4">
         {followers.length === 0 ? (
