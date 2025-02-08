@@ -359,7 +359,14 @@ export default function EditLinksPage() {
           spacing: settings.spacing,
           sortMode: settings.sortMode,
           likesColor: settings.likesColor
-        }
+        },
+        links: links.map(link => ({
+          _id: link.id,
+          title: link.title,
+          url: link.url,
+          visible: link.visible,
+          order: link.order
+        }))
       }
 
       const response = await userApi.updateProfile(updateData)
@@ -1207,7 +1214,7 @@ export default function EditLinksPage() {
           <Button 
             variant="contained" 
             color="primary"
-            onClick={handleSubmit}
+            onClick={handleSaveChanges}
             disabled={isSaving || !hasChanges}
             fullWidth={isMobile}
             startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : null}
