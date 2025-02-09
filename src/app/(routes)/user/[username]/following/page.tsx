@@ -1,55 +1,32 @@
-'use client'
+import { Metadata } from 'next'
+import FollowingClient from './following-client'
+import Link from 'next/link'
 
-import { useEffect, useState } from "react"
-import { userApi } from "@/services/api"
-import { UserCard } from "@/components/user-card"
-import toast from "react-hot-toast"
+type ParamsType = Promise<{ username: string }>
 
-interface User {
-  id: string
-  username: string
-  name: string
-  avatar?: string
+export const metadata: Metadata = {
+  title: 'Seguindo',
+  description: 'Lista de usuários seguidos'
 }
 
-export default function FollowingPage({ params }: { params: { username: string } }) {
-  const [following, setFollowing] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function loadFollowing() {
-      try {
-        const followingResponse = await userApi.getFollowingFromUser(params.username)
-        const followingData = followingResponse.data?.data || []
-        setFollowing(followingData)
-      } catch (error) {
-        console.error('Erro ao carregar usuários seguidos:', error)
-        toast.error('Erro ao carregar usuários seguidos')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadFollowing()
-  }, [params.username])
-
-  if (loading) {
-    return <div>Carregando...</div>
-  }
+export default async function FollowingPage(props: { params: ParamsType }) {
+  const {username} = await props.params
 
   return (
-    <div className="container max-w-2xl py-6 space-y-6">
-      <h1 className="text-2xl font-bold">Seguindo por @{params.username}</h1>
-      
-      <div className="space-y-4">
-        {following.length === 0 ? (
-          <p className="text-center text-muted-foreground">Não está seguindo ninguém ainda</p>
-        ) : (
-          following.map((user) => (
-            <UserCard key={user.id} user={user} />
-          ))
-        )}
+    <section className="py-6">
+      <div className="container max-w-2xl">
+        <div>
+          <Link
+            href={`/user/${username}`}
+            className="font-semibold text-primary hover:underline"
+          >
+            Voltar ao perfil
+          </Link>
+        </div>
+        <div className="mt-6">
+          <FollowingClient username={username} />
+        </div>
       </div>
-    </div>
+    </section>
   )
 }
