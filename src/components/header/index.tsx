@@ -90,10 +90,11 @@ export function Header() {
                 >
                   <MenuItem 
                     component={Link}
-                    href="/profile"
+                    href={`/user/${user.username}`}
                     onClick={handleClose}
                   >
                     Meu Perfil
+
                   </MenuItem>
                   <MenuItem 
                     component={Link}
