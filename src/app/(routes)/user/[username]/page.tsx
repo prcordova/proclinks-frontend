@@ -1,8 +1,8 @@
 import { ProfileContent } from './profile-content'
 
-type ParamsType = { username: string }
+export type ParamsType = Promise<{ username: string }>
 
-export default async function UserLinksPage({ params }: { params: ParamsType }) {
-  const username = params.username
+export default async function UserLinksPage(props: { params: ParamsType }) {
+  const { username } = await props.params
   return <ProfileContent username={username} />
 }
