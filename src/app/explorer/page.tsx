@@ -58,9 +58,10 @@ export default function ExplorerPage() {
     }
   }
 
-  const debouncedSearch = useDebounce((value: string) => {
+  const debouncedSearch = useDebounce((...args: unknown[]) => {
+    const searchValue = args[0] as string
     setPage(1)
-    fetchUsers(1, selectedFilter, value)
+    fetchUsers(1, selectedFilter, searchValue)
   }, 300)
 
   useEffect(() => {
