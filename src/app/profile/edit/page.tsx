@@ -533,25 +533,68 @@ export default function EditLinksPage() {
     }
   }
 
-  const handleSortModeChange = (mode: string) => {
-    if (!mode) return // Evita erro quando o modo é null
+  const handleSortModeChange = async (mode: string) => {
+    if (!mode) return
 
     setSettings(prev => ({ ...prev, sortMode: mode as ProfileSettings['sortMode'] }))
     
-    const sortedLinks = [...links].sort((a, b) => {
-      switch (mode) {
-        case 'date':
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        case 'name':
-          return a.title.localeCompare(b.title)
-        case 'likes':
-          return (b.likes || 0) - (a.likes || 0)
-        default:
-          return 0
-      }
-    })
+    const sortedLinks = [...links]
+    
+    switch (mode) {
+      case 'date':
+        sortedLinks.sort((a, b) => {
+          const dateA = new Date(a.createdAt).getTime()
+          const dateB = new Date(b.createdAt).getTime()
+          return dateB - dateA
+        })
+        break
+        
+      case 'name':
+        sortedLinks.sort((a, b) => {
+          const titleA = a.title.toLowerCase()
+          const titleB = b.title.toLowerCase()
+          return titleA.localeCompare(titleB)
+        })
+        break
+        
+      case 'likes':
+        sortedLinks.sort((a, b) => {
+          const likesA = a.likes || 0
+          const likesB = b.likes || 0
+          return likesB - likesA
+        })
+        break
+        
+      case 'custom':
+        sortedLinks.sort((a, b) => a.order - b.order)
+        break
+        
+      default:
+        return
+    }
 
-    setLinks(sortedLinks)
+    try {
+      // Atualiza a ordem no backend
+      const linkIds = sortedLinks.map(link => link.id)
+      const response = await linkApi.reorder({ links: linkIds })
+      
+      if (response.success) {
+        // Atualiza os estados com a nova ordem
+        const updatedLinks = sortedLinks.map((link, index) => ({
+          ...link,
+          order: index
+        }))
+        setLinks(updatedLinks)
+        setPendingLinks(updatedLinks)
+        showAlert('Ordem atualizada com sucesso', 'success')
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar ordem:', error)
+      showAlert('Erro ao atualizar ordem', 'error')
+      // Reverte para a ordem anterior em caso de erro
+      setLinks(links)
+      setPendingLinks(links)
+    }
   }
  
   const handleSpacingChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -777,17 +820,16 @@ export default function EditLinksPage() {
         {tab === 0 && (
           <Box>
             {links.length === 0 ? (
-              <Box 
-                sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  minHeight: '200px',
-                  gap: 2,
-                  textAlign: 'center'
-                }}
-              >
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '200px',
+                gap: 2,
+                textAlign: 'center',
+                p: 2
+              }}>
                 <Typography variant="h6" color="text.secondary">
                   Você ainda não possui nenhum link
                 </Typography>
@@ -798,6 +840,7 @@ export default function EditLinksPage() {
                   variant="contained"
                   startIcon={<AddIcon />}
                   onClick={() => setOpenNewLinkDialog(true)}
+                  fullWidth={isMobile}
                 >
                   Adicionar Link
                 </Button>
@@ -805,7 +848,7 @@ export default function EditLinksPage() {
             ) : (
               <Box>
                 <Card sx={{ mb: 3 }}>
-                  <CardContent>
+                  <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                     <Typography variant="h6" gutterBottom>
                       Ordenação
                     </Typography>
@@ -815,33 +858,87 @@ export default function EditLinksPage() {
                       exclusive
                       onChange={(_, mode) => handleSortModeChange(mode)}
                       aria-label="ordenação"
+                      orientation={isMobile ? "vertical" : "horizontal"}
+                      fullWidth={isMobile}
+                      size={isMobile ? "small" : "medium"}
+                      sx={{
+                        display: 'flex',
+                        flexWrap: isMobile ? 'nowrap' : 'wrap',
+                        '& .MuiToggleButton-root': {
+                          flex: isMobile ? '1' : 'initial',
+                          px: isMobile ? 1 : 2
+                        }
+                      }}
                     >
                       <ToggleButton value="custom" aria-label="personalizada">
-                        <DragIcon sx={{ mr: 1 }} />
-                        Personalizada
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 1,
+                          width: '100%',
+                          justifyContent: 'center'
+                        }}>
+                          <DragIcon sx={{ fontSize: isMobile ? 18 : 24 }} />
+                          <span>Personalizada</span>
+                        </Box>
                       </ToggleButton>
                       <ToggleButton value="date" aria-label="data">
-                        <SortIcon sx={{ mr: 1 }} />
-                        Data
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 1,
+                          width: '100%',
+                          justifyContent: 'center'
+                        }}>
+                          <SortIcon sx={{ fontSize: isMobile ? 18 : 24 }} />
+                          <span>Data</span>
+                        </Box>
                       </ToggleButton>
                       <ToggleButton value="name" aria-label="nome">
-                        <SortIcon sx={{ mr: 1 }} />
-                        Nome
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 1,
+                          width: '100%',
+                          justifyContent: 'center'
+                        }}>
+                          <SortIcon sx={{ fontSize: isMobile ? 18 : 24 }} />
+                          <span>Nome</span>
+                        </Box>
                       </ToggleButton>
                       <ToggleButton value="likes" aria-label="curtidas">
-                        <SortIcon sx={{ mr: 1 }} />
-                        Curtidas
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 1,
+                          width: '100%',
+                          justifyContent: 'center'
+                        }}>
+                          <SortIcon sx={{ fontSize: isMobile ? 18 : 24 }} />
+                          <span>Curtidas</span>
+                        </Box>
                       </ToggleButton>
                     </ToggleButtonGroup>
                   </CardContent>
                 </Card>
 
-                <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="h5">Gerenciar Links ({pendingLinks.length})</Typography>
+                <Box sx={{ 
+                  mb: 4, 
+                  display: 'flex', 
+                  flexDirection: isMobile ? 'column' : 'row',
+                  justifyContent: 'space-between', 
+                  alignItems: isMobile ? 'stretch' : 'center',
+                  gap: 2
+                }}>
+                  <Typography variant="h5" sx={{ fontSize: isMobile ? '1.25rem' : '1.5rem' }}>
+                    Gerenciar Links ({pendingLinks.length})
+                  </Typography>
                   <Button
                     variant="contained"
                     startIcon={<AddIcon />}
                     onClick={() => setOpenNewLinkDialog(true)}
+                    fullWidth={isMobile}
+                    size={isMobile ? "medium" : "large"}
                   >
                     Adicionar Link
                   </Button>
@@ -852,63 +949,88 @@ export default function EditLinksPage() {
                     <Card 
                       key={link.id}
                       sx={{ 
-                        mb: 2,
                         opacity: draggedIndex === index ? 0.5 : 1,
                         transition: 'all 0.2s',
-                        cursor: 'move',
+                        cursor: settings.sortMode === 'custom' ? 'move' : 'default',
                         '&:hover': {
                           bgcolor: 'action.hover'
                         }
                       }}
-                      onDragStart={() => handleDragStart(index)}
-                      onDragEnter={() => handleDragEnter(index)}
-                      onDragEnd={handleDragEnd}
-                      onDragOver={(e) => e.preventDefault()}
-                      draggable
+                      onDragStart={() => settings.sortMode === 'custom' && handleDragStart(index)}
+                      onDragEnter={() => settings.sortMode === 'custom' && handleDragEnter(index)}
+                      onDragEnd={() => settings.sortMode === 'custom' && handleDragEnd()}
+                      onDragOver={(e) => settings.sortMode === 'custom' && e.preventDefault()}
+                      draggable={settings.sortMode === 'custom'}
                     >
-                      <CardContent>
-                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                          <DragIcon 
-                            sx={{ 
-                              cursor: 'grab',
-                              '&:active': { cursor: 'grabbing' }
-                            }} 
-                          />
-                          
-                          <TextField
-                            label="Título"
-                            value={link.title}
-                            onChange={(e) => handleUpdateLink(link.id, { title: e.target.value })}
-                            size="small"
-                            sx={{ flexGrow: 1 }}
-                          />
+                      <CardContent sx={{ 
+                        p: isMobile ? 1 : 2,
+                        '&:last-child': { pb: isMobile ? 1 : 2 }
+                      }}>
+                        <Box sx={{ 
+                          display: 'flex', 
+                          flexDirection: 'column',
+                          gap: 2
+                        }}>
+                          <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center',
+                            gap: 1,
+                            width: '100%'
+                          }}>
+                            {settings.sortMode === 'custom' && (
+                              <DragIcon 
+                                sx={{ 
+                                  cursor: 'grab',
+                                  '&:active': { cursor: 'grabbing' },
+                                  fontSize: isMobile ? 20 : 24,
+                                  opacity: 0.7
+                                }} 
+                              />
+                            )}
+                            
+                            <TextField
+                              label="Título"
+                              value={link.title}
+                              onChange={(e) => handleUpdateLink(link.id, { title: e.target.value })}
+                              size="small"
+                              fullWidth
+                            />
+                          </Box>
                           
                           <TextField
                             label="URL"
                             value={link.url}
                             onChange={(e) => handleUpdateLink(link.id, { url: e.target.value })}
                             size="small"
-                            sx={{ flexGrow: 2 }}
+                            fullWidth
                           />
                           
-                          <FormControlLabel
-                            control={
-                              <Switch
-                                checked={link.visible}
-                                onChange={() => {
-                                  handleUpdateLink(link.id, { visible: !link.visible })
-                                }}
-                              />
-                            }
-                            label="Visível"
-                          />
-                          
-                          <IconButton 
-                            onClick={() => openDeleteDialog(link.id)}
-                            color="error"
-                          >
-                            <DeleteIcon />
-                          </IconButton>
+                          <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 1,
+                            width: '100%'
+                          }}>
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={link.visible}
+                                  onChange={() => handleUpdateLink(link.id, { visible: !link.visible })}
+                                  size={isMobile ? "small" : "medium"}
+                                />
+                              }
+                              label="Visível"
+                            />
+                            
+                            <IconButton 
+                              onClick={() => openDeleteDialog(link.id)}
+                              color="error"
+                              size={isMobile ? "small" : "medium"}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Box>
                         </Box>
                       </CardContent>
                     </Card>
@@ -1235,10 +1357,29 @@ export default function EditLinksPage() {
           onClose={() => !loading && setOpenNewLinkDialog(false)}
           maxWidth="sm"
           fullWidth
+          sx={{
+            '& .MuiDialog-paper': {
+              margin: isMobile ? '16px' : '32px',
+              width: 'calc(100% - 32px)',
+              maxHeight: isMobile ? 'calc(100% - 32px)' : '80vh'
+            }
+          }}
         >
-          <DialogTitle>Adicionar Novo Link</DialogTitle>
+          <DialogTitle>
+            <Typography variant={isMobile ? 'h6' : 'h5'}>
+              Adicionar Novo Link
+            </Typography>
+          </DialogTitle>
           <DialogContent>
-            <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ 
+              pt: 2, 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: 2,
+              '& .MuiTextField-root': {
+                minHeight: isMobile ? '48px' : '56px'
+              }
+            }}>
               <TextField
                 label="Título"
                 value={newLink.title}
@@ -1247,6 +1388,7 @@ export default function EditLinksPage() {
                 disabled={loading}
                 error={!newLink.title}
                 helperText={!newLink.title ? 'Título é obrigatório' : ''}
+                size={isMobile ? "small" : "medium"}
               />
               <TextField
                 label="URL"
@@ -1256,6 +1398,7 @@ export default function EditLinksPage() {
                 disabled={loading}
                 error={!newLink.url}
                 helperText={!newLink.url ? 'URL é obrigatória' : ''}
+                size={isMobile ? "small" : "medium"}
               />
               <FormControlLabel
                 control={
@@ -1269,10 +1412,12 @@ export default function EditLinksPage() {
               />
             </Box>
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ p: isMobile ? 2 : 3 }}>
             <Button 
               onClick={() => setOpenNewLinkDialog(false)}
               disabled={loading}
+              fullWidth={isMobile}
+              size={isMobile ? "small" : "medium"}
             >
               Cancelar
             </Button>
@@ -1280,7 +1425,9 @@ export default function EditLinksPage() {
               onClick={handleAddLink}
               disabled={loading || !newLink.title || !newLink.url}
               variant="contained"
-              startIcon={loading ? <CircularProgress size={20} /> : null}
+              fullWidth={isMobile}
+              size={isMobile ? "small" : "medium"}
+              startIcon={loading ? <CircularProgress size={isMobile ? 16 : 20} /> : null}
             >
               {loading ? 'Adicionando...' : 'Adicionar'}
             </Button>
