@@ -12,7 +12,10 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "ProcLinks - Seu hub de links personalizado",
   description: "Crie sua página personalizada e compartilhe seus links em um único lugar",
-};
+  icons: {
+    icon: '/icon.ico'
+  }
+}
 
 export default function RootLayout({
   children,
