@@ -4,6 +4,7 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import FavoriteIcon from '@mui/icons-material/Favorite'
 import Link from 'next/link'
 import { getImageUrl } from '@/utils/url'
+import { getPlanStyle } from '@/utils/planStyles'
 
 interface User {
   username: string
@@ -17,18 +18,7 @@ interface User {
   }
 }
 
-const getPlanStyle = (planType?: string) => {
-  switch (planType) {
-    case 'GOLD':
-      return { borderColor: '#FFD700' }
-    case 'SILVER':
-      return { borderColor: '#C0C0C0' }
-    case 'BRONZE':
-      return { borderColor: '#CD7F32' }
-    default:
-      return { borderColor: 'primary.main' }
-  }
-}
+
 
 export function UserCard({ user }: { user: User }) {
   return (
@@ -37,6 +27,8 @@ export function UserCard({ user }: { user: User }) {
         cursor: 'pointer',
         transition: 'all 0.2s',
         height: '100%',
+        minWidth: 230,
+        maxWidth: '100%',
         '&:hover': { 
           transform: 'translateY(-4px)',
           boxShadow: 4
@@ -78,83 +70,89 @@ export function UserCard({ user }: { user: User }) {
             </Typography>
 
             <Box sx={{ width: '100%' }}>
-              <Grid container spacing={1} justifyContent="center">
-                <Grid item xs={12} sm={4}>
-                  <Chip
-                    icon={<PeopleIcon sx={{ fontSize: '1.1rem' }} />}
-                    label={`${user.followers?.length || 0}`}
-                    variant="outlined"
-                    size="small"
-                    sx={{
-                      width: '100%',
-                      '& .MuiChip-label': {
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 0.5
-                      }
-                    }}
-                  />
-                  <Typography 
-                    variant="caption" 
-                    display="block" 
-                    textAlign="center" 
-                    sx={{ mt: 0.5 }}
-                  >
-                    Seguidores
-                  </Typography>
+              <Grid container spacing={2} justifyContent="center">
+                <Grid item xs={4}>
+                  <Stack alignItems="center" spacing={0.5}>
+                    <Chip
+                      icon={<PeopleIcon sx={{ fontSize: '1.2rem' }} />}
+                      label={`${user.followers?.length || 0}`}
+                      size="small"
+                      sx={{
+                        minWidth: 80,
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        '& .MuiChip-label': {
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 0.5
+                        }
+                      }}
+                    />
+                    <Typography 
+                      variant="caption" 
+                      display="block" 
+                      textAlign="center"
+                    >
+                      Seguidores
+                    </Typography>
+                  </Stack>
                 </Grid>
                 
-                <Grid item xs={12} sm={4}>
-                  <Chip
-                    icon={<PersonAddIcon sx={{ fontSize: '1.1rem' }} />}
-                    label={`${user.following?.length || 0}`}
-                    variant="outlined"
-                    size="small"
-                    sx={{
-                      width: '100%',
-                      '& .MuiChip-label': {
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 0.5
-                      }
-                    }}
-                  />
-                  <Typography 
-                    variant="caption" 
-                    display="block" 
-                    textAlign="center"
-                    sx={{ mt: 0.5 }}
-                  >
-                    Seguindo
-                  </Typography>
+                <Grid item xs={4}>
+                  <Stack alignItems="center" spacing={0.5}>
+                    <Chip
+                      icon={<PersonAddIcon sx={{ fontSize: '1.2rem' }} />}
+                      label={`${user.following?.length || 0}`}
+                      size="small"
+                      sx={{
+                        minWidth: 80,
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        '& .MuiChip-label': {
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 0.5
+                        }
+                      }}
+                    />
+                    <Typography 
+                      variant="caption" 
+                      display="block" 
+                      textAlign="center"
+                    >
+                      Seguindo
+                    </Typography>
+                  </Stack>
                 </Grid>
                 
-                <Grid item xs={12} sm={4}>
-                  <Chip
-                    icon={<FavoriteIcon sx={{ fontSize: '1.1rem' }} />}
-                    label={`${user.totalLikes || 0}`}
-                    variant="outlined"
-                    size="small"
-                    sx={{
-                      width: '100%',
-                      '& .MuiChip-label': {
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 0.5
-                      }
-                    }}
-                  />
-                  <Typography 
-                    variant="caption" 
-                    display="block" 
-                    textAlign="center"
-                    sx={{ mt: 0.5 }}
-                  >
-                    Likes
-                  </Typography>
+                <Grid item xs={4}>
+                  <Stack alignItems="center" spacing={0.5}>
+                    <Chip
+                      icon={<FavoriteIcon sx={{ fontSize: '1.2rem' }} />}
+                      label={`${user.totalLikes || 0}`}
+                      size="small"
+                      sx={{
+                        minWidth: 80,
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        '& .MuiChip-label': {
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 0.5
+                        }
+                      }}
+                    />
+                    <Typography 
+                      variant="caption" 
+                      display="block" 
+                      textAlign="center"
+                    >
+                      Likes
+                    </Typography>
+                  </Stack>
                 </Grid>
               </Grid>
             </Box>

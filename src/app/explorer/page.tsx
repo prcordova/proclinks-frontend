@@ -83,10 +83,12 @@ export default function ExplorerPage() {
       <Box sx={{ 
         display: 'flex', 
         flexDirection: { xs: 'column', md: 'row' },
-        gap: 4 
+        gap: 4,
+        maxWidth: '100%'
       }}>
         <Box sx={{ 
-          width: { xs: '100%', md: 'auto' }
+          width: { xs: '100%', md: 280 },
+          flexShrink: 0
         }}>
           <ExplorerSidebar
             selectedFilter={selectedFilter}
@@ -94,7 +96,10 @@ export default function ExplorerPage() {
           />
         </Box>
 
-        <Box sx={{ flex: 1 }}>
+        <Box sx={{ 
+          flex: 1,
+          maxWidth: '100%'
+        }}>
           <Box sx={{ mb: 6 }}>
             <TextField
               fullWidth
@@ -122,9 +127,26 @@ export default function ExplorerPage() {
                   Resultados da busca
                 </Typography>
                 {users.searchResults.length > 0 ? (
-                  <Grid container spacing={3}>
+                  <Grid 
+                    container 
+                    spacing={3} 
+                    justifyContent="center"
+                    sx={{ 
+                      '& .MuiGrid-item': {
+                        display: 'flex',
+                        justifyContent: 'center'
+                      }
+                    }}
+                  >
                     {users.searchResults.map((user) => (
-                      <Grid item xs={12} sm={6} md={4} key={user._id}>
+                      <Grid 
+                        item 
+                        xs={12} 
+                        sm={6} 
+                        lg={4} 
+                        xl={3} 
+                        key={user._id}
+                      >
                         <UserCard user={user} />
                       </Grid>
                     ))}
@@ -139,13 +161,39 @@ export default function ExplorerPage() {
           </Box>
 
           <Box>
-            <Typography variant="h6" sx={{ mb: 2 }}>
+            <Typography variant="h6" sx={{ mb: 3 }}>
               {searchQuery ? 'Outros usuários que podem te interessar' : 'Usuários em Destaque'}
             </Typography>
-            <Grid container spacing={3}>
+            <Grid 
+              container 
+              spacing={{ xs: 2, sm: 3 }}
+              columns={{ xs: 1, sm: 12, md: 12, lg: 12 }}
+              sx={{ 
+                width: '100%',
+                margin: '0 auto',
+                '& .MuiGrid-item': {
+                  display: 'flex',
+                  justifyContent: 'center',
+                  width: '100%'
+                }
+              }}
+            >
               {users.featuredUsers.map((user) => (
-                <Grid item xs={12} sm={6} md={4} key={user._id}>
-                  <UserCard user={user} />
+                <Grid 
+                  item 
+                  xs={1}
+                  sm={6}
+                  md={6}
+                  lg={4}
+                  key={user._id}
+                >
+                  <Box sx={{ 
+                    width: '100%', 
+                    maxWidth: 340,
+                    px: 1
+                  }}>
+                    <UserCard user={user} />
+                  </Box>
                 </Grid>
               ))}
             </Grid>
