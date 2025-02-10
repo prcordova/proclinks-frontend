@@ -10,6 +10,12 @@ interface User {
   username: string
   name: string
   avatar?: string
+  followers: number
+  following: number
+  bio?: string
+  plan?: {
+    type: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
+  }
 }
 
 export default function FollowersClient({ username }: { username: string }) {
