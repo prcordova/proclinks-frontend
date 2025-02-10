@@ -3,6 +3,7 @@ import PeopleIcon from '@mui/icons-material/People'
 import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import FavoriteIcon from '@mui/icons-material/Favorite'
 import Link from 'next/link'
+import { getImageUrl } from '@/utils/url'
 
 interface User {
   username: string
@@ -44,7 +45,7 @@ export function UserCard({ user }: { user: User }) {
         <CardContent>
           <Stack spacing={2} alignItems="center">
             <Avatar 
-              src={user.avatar ? `${process.env.NEXT_PUBLIC_API_URL}${user.avatar}` : undefined} 
+              src={user.avatar ? getImageUrl(user.avatar) || undefined : undefined}
               sx={{ 
                 width: 120,
                 height: 120,
