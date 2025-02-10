@@ -9,10 +9,10 @@ import {
    Dialog, DialogTitle,
   DialogContent, DialogActions, DialogContentText,
   Tabs, Tab, Card, CardContent,
-  Select, MenuItem, InputLabel, FormControl,
+  
   ToggleButton, ToggleButtonGroup,
   Snackbar, Alert, Link as MuiLink,
-  IconButton, Divider, useTheme, useMediaQuery, Backdrop, CircularProgress
+  IconButton,  useTheme, useMediaQuery, Backdrop, CircularProgress
 } from '@mui/material'
 import { 
   DragHandle as DragIcon, 
@@ -24,7 +24,7 @@ import {
 } from '@mui/icons-material'
  
  
-  import { CustomAvatar } from '@/components/avatar'
+ import { Appearance } from '@/components/appearance'
   
 interface LinkItem {
   id: string
@@ -99,58 +99,9 @@ interface ApiLink {
   order: number
   likes?: number
 }
+ 
 
-const ColorPickerField = ({ 
-  label, 
-  value, 
-  onChange, 
-  isMobile 
-}: { 
-  label: string
-  value: string
-  onChange: (color: string) => void
-  isMobile: boolean 
-}) => (
-  <Box sx={{ mb: 3 }}>
-    <Typography gutterBottom variant={isMobile ? 'body2' : 'body1'}>
-      {label}
-    </Typography>
-    <Box sx={{ 
-      display: 'flex', 
-      gap: 2, 
-      alignItems: 'center',
-      flexDirection: isMobile ? 'column' : 'row'
-    }}>
-      <Box
-        sx={{
-          width: isMobile ? '100%' : 40,
-          height: 40,
-          borderRadius: 1,
-          bgcolor: value,
-          border: '2px solid #ddd'
-        }}
-      />
-      <TextField
-        type="color"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        sx={{ 
-          flex: 1,
-          '& input': {
-            width: '100%',
-            height: '40px',
-            padding: '4px',
-            cursor: 'pointer'
-          }
-        }}
-        fullWidth
-      />
-    </Box>
-  </Box>
-)
-
-const avatarBorderColor = '#FFD700' // Cor dourada para borda do avatar
-
+ 
 export default function EditLinksPage() {
   const { user } = useAuth()
   const [links, setLinks] = useState<LinkItem[]>([])
@@ -195,7 +146,6 @@ export default function EditLinksPage() {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [profileData, setProfileData] = useState<ProfileData | null>(null)
-  const [isAvatarLoading, setIsAvatarLoading] = useState(false)
 
   useEffect(() => {
     async function loadProfile() {
@@ -597,14 +547,7 @@ export default function EditLinksPage() {
     }
   }
  
-  const handleSpacingChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newSpacing = Number(event.target.value)
-    setSettings(prev => ({
-      ...prev,
-      spacing: newSpacing
-    }))
-    setHasChanges(true)
-  }
+ 
 
   // Links de exemplo para o preview
   const [previewLinks, setPreviewLinks] = useState<PreviewLink[]>([
@@ -717,7 +660,6 @@ export default function EditLinksPage() {
 
   const handleAvatarChange = async (file: File) => {
     try {
-      setIsAvatarLoading(true)
       const response = await userApi.updateAvatar(file)
       if (response.success) {
         // Atualiza o avatar no estado do perfil
@@ -736,8 +678,6 @@ export default function EditLinksPage() {
         severity: 'error'
       })
       throw error
-    } finally {
-      setIsAvatarLoading(false)
     }
   }
  
@@ -1051,209 +991,20 @@ export default function EditLinksPage() {
               width: isMobile ? '100%' : isTablet ? '350px' : '400px',
               flexShrink: 0
             }}>
-              <Card>
-                <CardContent>
-                  <CustomAvatar
-                    src={profileData?.avatar || null}
-                    username={user?.username}
-                    planType={user?.plan?.type}
-                    borderColor={user?.plan?.type === 'GOLD' ? avatarBorderColor : undefined}
-                    editable={true}
-                    onAvatarChange={handleAvatarChange}
-                    isLoading={isAvatarLoading}
-                  />
-                  
-                  {/* Campo de Bio */}
-                  <Box sx={{ mt: 3 }}>
-                    <Typography variant="h6" gutterBottom>
-                      Biografia
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      multiline
-                      rows={4}
-                      placeholder="Escreva uma breve descrição sobre você..."
-                      value={settings.bio}
-                      onChange={(e) => {
-                        setSettings(prev => ({
-                          ...prev,
-                          bio: e.target.value
-                        }))
-                        setHasChanges(true)
-                      }}
-                    />
-                  </Box>
-
-                  <Divider sx={{ my: 3 }} />
-                  
-                  <Typography variant="h6" gutterBottom>
-                    Cores
-                  </Typography>
-                  
-                  <Box sx={{ 
-                    display: 'grid',
-                    gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr',
-                    gap: 2
-                  }}>
-                    <ColorPickerField
-                      label="Cor de Fundo"
-                      value={settings.backgroundColor}
-                      onChange={(color) => {
-                        setSettings(prev => ({
-                          ...prev,
-                          backgroundColor: color
-                        }))
-                        setHasChanges(true)
-                      }}
-                      isMobile={isMobile}
-                    />
-
-                    <ColorPickerField
-                      label="Cor dos Cards"
-                      value={settings.cardColor}
-                      onChange={(color) => {
-                        setSettings(prev => ({
-                          ...prev,
-                          cardColor: color
-                        }))
-                        setHasChanges(true)
-                      }}
-                      isMobile={isMobile}
-                    />
-
-                    <ColorPickerField
-                      label="Cor do Texto"
-                      value={settings.textColor}
-                      onChange={(color) => {
-                        setSettings(prev => ({
-                          ...prev,
-                          textColor: color
-                        }))
-                        setHasChanges(true)
-                      }}
-                      isMobile={isMobile}
-                    />
-
-                    <ColorPickerField
-                      label="Cor do Texto dos Cards"
-                      value={settings.cardTextColor}
-                      onChange={(color) => {
-                        setSettings(prev => ({
-                          ...prev,
-                          cardTextColor: color
-                        }))
-                        setHasChanges(true)
-                      }}
-                      isMobile={isMobile}
-                    />
-
-                    <ColorPickerField
-                      label="Cor dos Likes"
-                      value={settings.likesColor}
-                      onChange={(color) => {
-                        setSettings(prev => ({
-                          ...prev,
-                          likesColor: color
-                        }))
-                        setHasChanges(true)
-                      }}
-                      isMobile={isMobile}
-                    />
-                  </Box>
-
-                  <Divider sx={{ my: 3 }} />
-
-                  <Typography variant="h6" gutterBottom>
-                    Layout
-                  </Typography>
-
-                  <Box sx={{ 
-                    display: 'grid',
-                    gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr',
-                    gap: 2
-                  }}>
-                    <FormControl fullWidth>
-                      <InputLabel>Modo de Exibição</InputLabel>
-                      <Select
-                        value={settings.displayMode}
-                        onChange={(e) => {
-                          setSettings(prev => ({
-                            ...prev,
-                            displayMode: e.target.value as 'list' | 'grid'
-                          }))
-                          setHasChanges(true)
-                        }}
-                        size={isMobile ? "small" : "medium"}
-                      >
-                        <MenuItem value="list">Lista</MenuItem>
-                        <MenuItem value="grid">Grade</MenuItem>
-                      </Select>
-                    </FormControl>
-
-                    <FormControl fullWidth>
-                      <InputLabel>Estilo dos Cards</InputLabel>
-                      <Select
-                        value={settings.cardStyle}
-                        onChange={(e) => {
-                          setSettings(prev => ({
-                            ...prev,
-                            cardStyle: e.target.value as 'rounded' | 'square' | 'pill'
-                          }))
-                          setHasChanges(true)
-                        }}
-                        size={isMobile ? "small" : "medium"}
-                      >
-                        <MenuItem value="rounded">Arredondado</MenuItem>
-                        <MenuItem value="square">Quadrado</MenuItem>
-                        <MenuItem value="pill">Pílula</MenuItem>
-                      </Select>
-                    </FormControl>
-
-                    <FormControl fullWidth>
-                      <InputLabel>Animação</InputLabel>
-                      <Select
-                        value={settings.animation}
-                        onChange={(e) => {
-                          setSettings(prev => ({
-                            ...prev,
-                            animation: e.target.value as 'none' | 'fade' | 'slide' | 'bounce'
-                          }))
-                          setHasChanges(true)
-                        }}
-                        size={isMobile ? "small" : "medium"}
-                      >
-                        <MenuItem value="none">Nenhuma</MenuItem>
-                        <MenuItem value="fade">Fade</MenuItem>
-                        <MenuItem value="slide">Slide</MenuItem>
-                        <MenuItem value="bounce">Bounce</MenuItem>
-                      </Select>
-                    </FormControl>
-
-                    <Box sx={{ mb: 2 }}>
-                      <Typography gutterBottom variant={isMobile ? 'body2' : 'body1'}>
-                        Espaçamento entre cards: {settings.spacing}px
-                      </Typography>
-                      <TextField
-                        type="range"
-                        value={settings.spacing}
-                        onChange={handleSpacingChange}
-                        inputProps={{
-                          min: 8,
-                          max: 32,
-                          step: 4
-                        }}
-                        sx={{
-                          width: '100%',
-                          '& input': {
-                            padding: '8px 0',
-                            height: '20px'
-                          }
-                        }}
-                      />
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
+              <Appearance 
+                settings={settings}
+                user={user}
+                profileData={profileData}
+                onSettingsChange={(newSettings) => {
+                  setSettings(prev => ({
+                    ...prev,
+                    ...newSettings
+                  }))
+                  setHasChanges(true)
+                }}
+                onAvatarChange={handleAvatarChange}
+                isMobile={isMobile}
+              />
             </Box>
 
             <Box sx={{ 
