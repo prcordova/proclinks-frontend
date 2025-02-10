@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { IconButton, Tooltip, Avatar as MuiAvatar, Box } from '@mui/material'
 import CameraAltIcon from '@mui/icons-material/CameraAlt'
 import { Button } from '@/components/ui/button'
+import { getImageUrl } from '@/utils/url'
 
 interface CustomAvatarProps {
   src: string | null
@@ -73,7 +74,7 @@ export function CustomAvatar({
 
   const avatarUrl = previewUrl || 
     (src && !imageError 
-      ? `${process.env.NEXT_PUBLIC_API_URL}${src}` 
+      ? getImageUrl(src) || undefined 
       : undefined)
 
   const AvatarComponent = (
