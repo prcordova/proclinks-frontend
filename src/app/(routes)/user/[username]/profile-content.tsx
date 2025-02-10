@@ -10,7 +10,6 @@ import Link from 'next/link'
 import { CustomAvatar } from '@/components/avatar'
 import { useRouter } from 'next/navigation'
 import EditIcon from '@mui/icons-material/Edit'
-import { AxiosError } from 'axios'
 import { CustomLink } from '@/components/custom-link'
 
 interface UserLink {
@@ -76,27 +75,28 @@ export function ProfileContent({ username }: { username: string }) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [links, setLinks] = useState<UserLink[]>([])
   const [loading, setLoading] = useState(true)
+  const [isFollowing, setIsFollowing] = useState(false)
 
   const loadProfile = useCallback(async () => {
     try {
       const profileData = await userApi.getPublicProfile(username)
-      console.log('Profile Data:', profileData)
-      
-      const userId = profileData.data.avatar?.split('/users/')[1]?.split('/')[0]
       
       setProfile({
         ...profileData.data,
-        userId,
-        isFollowing: Array.isArray(currentUser?.following) && 
-          currentUser?.following.includes(userId)
+        userId: profileData.data.id
       })
+      
+      const isUserFollowing = Array.isArray(profileData.data.followersIds) && 
+        profileData.data.followersIds.includes(currentUser?.id)
+      
+      setIsFollowing(isUserFollowing)
       setLinks(profileData.data.links || [])
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
     } finally {
       setLoading(false)
     }
-  }, [username, currentUser?.following])
+  }, [username, currentUser?.id])
 
   useEffect(() => {
     loadProfile()
@@ -106,28 +106,24 @@ export function ProfileContent({ username }: { username: string }) {
     try {
       setIsLoading(true)
       
-      if (profile?.isFollowing) {
-        await userApi.unfollowUser(profile.userId)
-        setProfile(prev => ({
-          ...prev!,
-          isFollowing: false,
-          followers: Math.max(0, prev!.followers - 1) // Garantir que não fique negativo
-        }))
+      if (!profile?.id) {
+        throw new Error('ID do usuário não encontrado')
+      }
+      
+      if (isFollowing) {
+        await userApi.unfollowUser(profile.id)
+        setIsFollowing(false)
         toast.success('Deixou de seguir com sucesso!')
       } else {
-        await userApi.followUser(profile!.userId)
-        setProfile(prev => ({
-          ...prev!,
-          isFollowing: true,
-          followers: prev!.followers + 1
-        }))
+        await userApi.followUser(profile.id)
+        setIsFollowing(true)
         toast.success('Seguindo com sucesso!')
       }
-    } catch (error) {
-      const err = error as AxiosError<{ message: string }>
-      const errorMessage = err.response?.data?.message || 'Erro ao atualizar seguidor'
-      toast.error(errorMessage)
+      
       loadProfile()
+    } catch (error) {
+      const err = error as Error
+      toast.error(err.message || 'Erro ao atualizar seguidor')
     } finally {
       setIsLoading(false)
     }
@@ -266,7 +262,7 @@ export function ProfileContent({ username }: { username: string }) {
           {/* Botão de Seguir - Não mostrar para o próprio perfil */}
           {profile && currentUser && currentUser.id !== profile.userId && (
             <FollowButton 
-              text={profile.isFollowing ? BUTTON_TEXT.UNFOLLOW : BUTTON_TEXT.FOLLOW}
+              text={isFollowing ? BUTTON_TEXT.UNFOLLOW : BUTTON_TEXT.FOLLOW}
               isLoading={isLoading}
               onClick={handleFollowClick}
             />
