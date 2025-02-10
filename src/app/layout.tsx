@@ -6,7 +6,7 @@ import { AuthProvider } from '@/contexts/auth-context'
 import { Header } from '@/components/header'
 import { ThemeProvider } from '@/contexts/theme-context'
 import { Footer } from '@/components/footer'
-
+import { Analytics } from "@vercel/analytics/react"
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -31,6 +31,7 @@ export default function RootLayout({
             <main>
               <RootLayoutClient>
                 {children}
+                <Analytics />
               </RootLayoutClient>
             </main>
             <Footer />
