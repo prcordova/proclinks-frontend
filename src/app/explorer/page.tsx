@@ -10,6 +10,7 @@ import { ExplorerSidebar, FilterOption } from '@/components/explorer-sidebar'
 import { UserCard } from '@/components/user-card'
 import { userApi } from '@/services/api'
 import { useDebounce } from '@/hooks/useDebounce'
+import { useLoading } from '@/contexts/loading-context'
 
 interface User {
   _id: string
@@ -34,14 +35,15 @@ export default function ExplorerPage() {
   })
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
-  const [loading, setLoading] = useState(false)
-  const [selectedFilter, setSelectedFilter] = useState<FilterOption>('popular')
+   const [selectedFilter, setSelectedFilter] = useState<FilterOption>('popular')
   const [searchQuery, setSearchQuery] = useState('')
+  const { setIsLoading  ,isLoading} = useLoading()
 
   const fetchUsers = async (pageNum: number, filter: FilterOption, search?: string) => {
-    setLoading(true)
+    setIsLoading(true)
     try {
       const response = await userApi.listUsers({
+
         page: pageNum,
         limit: 20,
         filter,
@@ -53,10 +55,11 @@ export default function ExplorerPage() {
         featuredUsers: response.data.featuredUsers
       }))
       setHasMore(response.data.hasMore)
+      setIsLoading(false)
     } catch (error) {
       console.error('Erro ao buscar usuários:', error)
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
@@ -209,9 +212,9 @@ export default function ExplorerPage() {
                   setPage(prev => prev + 1)
                   fetchUsers(page + 1, selectedFilter, searchQuery)
                 }}
-                disabled={loading}
+                disabled={isLoading}
               >
-                {loading ? 'Carregando...' : 'Carregar mais'}
+                {isLoading ? 'Carregando...' : 'Carregar mais'}
               </Button>
             </Box>
           )}

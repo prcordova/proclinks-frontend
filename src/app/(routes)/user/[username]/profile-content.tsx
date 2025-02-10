@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Container, Box, Typography, CircularProgress, IconButton } from '@mui/material'
+import { Container, Box, Typography, IconButton } from '@mui/material'
 import { userApi } from '@/services/api'
 import { useAuth } from '@/contexts/auth-context'
 import { FollowButton } from '@/components/follow-button'
@@ -11,6 +11,7 @@ import { CustomAvatar } from '@/components/avatar'
 import { useRouter } from 'next/navigation'
 import EditIcon from '@mui/icons-material/Edit'
 import { CustomLink } from '@/components/custom-link'
+import { useLoading } from '@/contexts/loading-context'
 
 interface UserLink {
   _id: string
@@ -71,14 +72,15 @@ const BUTTON_TEXT = {
 export function ProfileContent({ username }: { username: string }) {
   const { user: currentUser } = useAuth()
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
+   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [links, setLinks] = useState<UserLink[]>([])
-  const [loading, setLoading] = useState(true)
-  const [isFollowing, setIsFollowing] = useState(false)
+   const [isFollowing, setIsFollowing] = useState(false)
+  const { setIsLoading , isLoading } = useLoading()
 
   const loadProfile = useCallback(async () => {
+    setIsLoading(true)
     try {
+   
       const profileData = await userApi.getPublicProfile(username)
       
       setProfile({
@@ -91,12 +93,15 @@ export function ProfileContent({ username }: { username: string }) {
       
       setIsFollowing(isUserFollowing)
       setLinks(profileData.data.links || [])
+      setIsLoading(false)
     } catch (error) {
+      setIsLoading(false)
       console.error('Erro ao carregar dados:', error)
     } finally {
-      setLoading(false)
+     setIsLoading(false)
     }
-  }, [username, currentUser?.id])
+
+  }, [username, currentUser?.id, setIsLoading])
 
   useEffect(() => {
     loadProfile()
@@ -128,11 +133,7 @@ export function ProfileContent({ username }: { username: string }) {
       setIsLoading(false)
     }
   }
-
-  if (loading) {
-    return <CircularProgress />
-  }
-
+ 
   if (!profile) {
     return <Typography>Perfil não encontrado</Typography>
   }

@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { RootLayoutClient } from "@/components/root-layout-client";
 import { AuthProvider } from '@/contexts/auth-context'
+import { LoadingProvider } from '@/contexts/loading-context'
 import { Header } from '@/components/header'
 import { ThemeProvider } from '@/contexts/theme-context'
 import { Footer } from '@/components/footer'
@@ -28,15 +29,17 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider>
           <AuthProvider>
-            <Header />
-            <main>
-              <RootLayoutClient>
-                {children}
-                <Analytics />
-              </RootLayoutClient>
-            </main>
-            <Footer />
-            <Toaster />
+            <LoadingProvider>
+              <Header />
+              <main>
+                <RootLayoutClient>
+                  {children}
+                  <Analytics />
+                </RootLayoutClient>
+              </main>
+              <Footer />
+              <Toaster />
+            </LoadingProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
