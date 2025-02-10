@@ -10,15 +10,13 @@ interface User {
   username: string
   avatar?: string
   bio?: string
-  followers: number
-  following: number
+  followers: number | string[]
+  following: number | string[]
   totalLikes?: number
   plan?: {
     type: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
   }
 }
-
-
 
 export function UserCard({ user }: { user: User }) {
   return (
@@ -75,7 +73,7 @@ export function UserCard({ user }: { user: User }) {
                   <Stack alignItems="center" spacing={0.5}>
                     <Chip
                       icon={<PeopleIcon sx={{ fontSize: '1.2rem' }} />}
-                      label={Array.isArray(user.followers) ? user.followers.length : 0}
+                      label={typeof user.followers === 'number' ? user.followers : user.followers.length}
                       size="small"
                       sx={{
                         minWidth: 80,
@@ -103,7 +101,7 @@ export function UserCard({ user }: { user: User }) {
                   <Stack alignItems="center" spacing={0.5}>
                     <Chip
                       icon={<PersonAddIcon sx={{ fontSize: '1.2rem' }} />}
-                      label={Array.isArray(user.following) ? user.following.length : 0}
+                      label={typeof user.following === 'number' ? user.following : user.following.length}
                       size="small"
                       sx={{
                         minWidth: 80,
