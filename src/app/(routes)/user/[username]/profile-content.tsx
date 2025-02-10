@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Container, Box, Typography, Link as MuiLink, CircularProgress, IconButton } from '@mui/material'
+import { Container, Box, Typography, CircularProgress, IconButton } from '@mui/material'
 import { userApi } from '@/services/api'
 import { useAuth } from '@/contexts/auth-context'
 import { FollowButton } from '@/components/follow-button'
@@ -11,6 +11,7 @@ import { CustomAvatar } from '@/components/avatar'
 import { useRouter } from 'next/navigation'
 import EditIcon from '@mui/icons-material/Edit'
 import { AxiosError } from 'axios'
+import { CustomLink } from '@/components/custom-link'
 
 interface UserLink {
   _id: string
@@ -300,43 +301,13 @@ export function ProfileContent({ username }: { username: string }) {
             mt: 4
           }}>
             {links.map((link) => (
-              <MuiLink
+              <CustomLink
                 key={link._id}
-                href={link.url.startsWith('http') ? link.url : `https://${link.url}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                sx={{
-                  display: 'block',
-                  width: profile.profile.displayMode === 'grid' ? 'calc(50% - 8px)' : '100%',
-                  p: 2,
-                  bgcolor: profile.profile.cardColor,
-                  color: profile.profile.cardTextColor,
-                  borderRadius: profile.profile.cardStyle === 'pill' ? '24px' : 
-                             profile.profile.cardStyle === 'square' ? '0px' : '8px',
-                  textDecoration: 'none',
-                  textAlign: 'center',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  transition: 'transform 0.2s ease-in-out',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-                  }
-                }}
-              >
-                {link.title}
-                {link.likes > 0 && (
-                  <Typography 
-                    variant="caption" 
-                    sx={{ 
-                      display: 'block',
-                      mt: 1,
-                      color: profile.profile.likesColor
-                    }}
-                  >
-                    ❤️ {link.likes}
-                  </Typography>
-                )}
-              </MuiLink>
+                title={link.title}
+                url={link.url}
+                likes={link.likes}
+                profile={profile.profile}
+              />
             ))}
           </Box>
         )}

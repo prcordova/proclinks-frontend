@@ -7,6 +7,7 @@ import { Header } from '@/components/header'
 import { ThemeProvider } from '@/contexts/theme-context'
 import { Footer } from '@/components/footer'
 import { Analytics } from "@vercel/analytics/react"
+import { Toaster } from 'react-hot-toast'
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -35,6 +36,7 @@ export default function RootLayout({
               </RootLayoutClient>
             </main>
             <Footer />
+            <Toaster />
           </AuthProvider>
         </ThemeProvider>
       </body>
