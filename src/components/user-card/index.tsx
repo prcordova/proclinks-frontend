@@ -10,8 +10,8 @@ interface User {
   username: string
   avatar?: string
   bio?: string
-  followers?: string[]
-  following?: string[]
+  followers: number
+  following: number
   totalLikes?: number
   plan?: {
     type: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
@@ -75,7 +75,7 @@ export function UserCard({ user }: { user: User }) {
                   <Stack alignItems="center" spacing={0.5}>
                     <Chip
                       icon={<PeopleIcon sx={{ fontSize: '1.2rem' }} />}
-                      label={`${user.followers?.length || 0}`}
+                      label={user.followers || 0}
                       size="small"
                       sx={{
                         minWidth: 80,
@@ -103,7 +103,7 @@ export function UserCard({ user }: { user: User }) {
                   <Stack alignItems="center" spacing={0.5}>
                     <Chip
                       icon={<PersonAddIcon sx={{ fontSize: '1.2rem' }} />}
-                      label={`${user.following?.length || 0}`}
+                      label={user.following || 0}
                       size="small"
                       sx={{
                         minWidth: 80,

@@ -20,6 +20,8 @@ interface User {
     type: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
     status: string
   }
+  followers: number
+  following: number
 }
 
 export default function ExplorerPage() {
