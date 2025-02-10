@@ -28,8 +28,7 @@ export function SortableLink({ link, onUpdate, onDelete }: SortableLinkProps) {
   } = useSortable({ id: link.id })
 
   const handleDelete = () => {
-    console.log('Clicou em deletar:', link.id)
-    onDelete(link.id)
+     onDelete(link.id)
   }
 
   const style = {

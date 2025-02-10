@@ -60,8 +60,7 @@ export const authApi = {
     cpf: string
     phone: string
   }) => {
-    console.log('Dados enviados:', data) // Para debug
-    return api.post('/api/auth/register', data)
+     return api.post('/api/auth/register', data)
   }
 }
 
@@ -84,10 +83,8 @@ export const userApi = {
   },
 
   updateProfile: async (data: ProfileUpdateData) => {
-    console.log('Enviando dados para atualização:', data)
-    const response = await api.put('/api/users/profile', data)
-    console.log('Resposta da API:', response.data)
-    return response.data
+     const response = await api.put('/api/users/profile', data)
+     return response.data
   },
 
   getFollowStatus: async (username: string) => {
@@ -121,15 +118,13 @@ export const userApi = {
   },
 
   followUser: async (userId: string) => {
-    console.log('Trying to follow user with ID:', userId)
-    if (!userId) throw new Error('UserId is required')
+     if (!userId) throw new Error('UserId is required')
     const response = await api.post(`/api/users/${userId}/follow`)
     return response.data
   },
 
   unfollowUser: async (userId: string) => {
-    console.log('Trying to unfollow user with ID:', userId)
-    if (!userId) throw new Error('UserId is required')
+     if (!userId) throw new Error('UserId is required')
     const response = await api.delete(`/api/users/${userId}/follow`)
     return response.data
   },
@@ -188,8 +183,7 @@ export const linkApi = {
 
   reorder: async (data: { links: string[] }) => {
     try {
-      console.log('Enviando dados para reordenação:', data)
-      const response = await api.post('/api/links/reorder', {
+       const response = await api.post('/api/links/reorder', {
         links: data.links.map(id => id.toString())
       })
       return { success: true, data: response.data }

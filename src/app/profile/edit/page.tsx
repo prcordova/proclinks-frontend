@@ -462,8 +462,7 @@ export default function EditLinksPage() {
     try {
       // Garantir que temos IDs válidos
       const linkIds = pendingLinks.map(link => link.id)
-      console.log('IDs dos links para reordenação:', linkIds) // Debug
-
+ 
       const response = await linkApi.reorder({ links: linkIds })
       
       if (response.success) {

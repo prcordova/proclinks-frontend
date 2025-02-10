@@ -2,12 +2,10 @@
 
 import { useState } from "react"
 import { 
-  Button, Container, Typography, Box, Divider, Paper,
+  Button, Container, Typography, Box,  Paper,
   TextField
 } from '@mui/material'
-import GitHubIcon from '@mui/icons-material/GitHub'
-import GoogleIcon from '@mui/icons-material/Google'
-import FacebookIcon from '@mui/icons-material/Facebook'
+ 
 import Link from 'next/link'
 import { useAuth } from "@/contexts/auth-context"
 import { AxiosError } from 'axios'
@@ -95,10 +93,7 @@ export default function RegisterPage() {
     }
   }
 
-  const handleSocialLogin = async (provider: string) => {
-    console.log(`Cadastro com ${provider}`)
-  }
-
+ 
   return (
     <Container maxWidth="sm">
       <Box sx={{ 
@@ -216,37 +211,9 @@ export default function RegisterPage() {
             </Button>
           </Box>
 
-          <Divider sx={{ my: 3 }}>ou cadastre-se com</Divider>
-
-          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<GitHubIcon />}
-              onClick={() => handleSocialLogin('github')}
-              disabled={loading}
-            >
-              GitHub
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<GoogleIcon />}
-              onClick={() => handleSocialLogin('google')}
-              disabled={loading}
-            >
-              Google
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<FacebookIcon />}
-              onClick={() => handleSocialLogin('facebook')}
-              disabled={loading}
-            >
-              Facebook
-            </Button>
-          </Box>
+ 
+            
+            
 
           <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary' }}>
             Já tem uma conta?{' '}
