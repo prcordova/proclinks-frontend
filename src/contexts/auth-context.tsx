@@ -29,10 +29,15 @@ interface RegisterUserData {
   username: string
   email: string
   password: string
-  cpf: string
+ 
   phone: string
   confirmPassword?: string
+  fullName: string
+  birthDate: string
+  
+  termsAccepted: boolean
 }
+
 
 interface ApiResponse<T> {
   success: boolean

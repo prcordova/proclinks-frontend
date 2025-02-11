@@ -3,12 +3,16 @@
 import { useState } from "react"
 import { 
   Button, Container, Typography, Box,  Paper,
-  TextField
+  TextField, FormControlLabel, Checkbox
 } from '@mui/material'
  
 import Link from 'next/link'
 import { useAuth } from "@/contexts/auth-context"
 import { AxiosError } from 'axios'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers'
+import dayjs from 'dayjs'
+import 'dayjs/locale/pt-br'
 
 export default function RegisterPage() {
   const { register } = useAuth()
@@ -17,16 +21,17 @@ export default function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    cpf: '',
-    phone: ''
+ 
+    phone: '',
+    fullName: '',
+    birthDate: ''
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [birthDate, setBirthDate] = useState<dayjs.Dayjs | null>(null)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
+
  
-  const formatCPF = (value: string) => {
-    const numbers = value.replace(/\D/g, '')
-    return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/g, '$1.$2.$3-$4')
-  }
 
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, '')
@@ -38,10 +43,7 @@ export default function RegisterPage() {
   ) => {
     let value = e.target.value
 
-    if (field === 'cpf') {
-      value = value.replace(/\D/g, '').slice(0, 11)
-      value = formatCPF(value)
-    }
+  
     
     if (field === 'phone') {
       value = value.replace(/\D/g, '').slice(0, 11)
@@ -54,6 +56,14 @@ export default function RegisterPage() {
     }))
   }
 
+  const isOver18 = (date: dayjs.Dayjs | null): boolean => {
+    if (!date) return false
+    const today = dayjs()
+    const birthDate = dayjs(date)
+    const age = today.diff(birthDate, 'year')
+    return age >= 18
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -64,13 +74,19 @@ export default function RegisterPage() {
       return
     }
 
-    const cleanCpf = formData.cpf.replace(/\D/g, '')
-    const cleanPhone = formData.phone.replace(/\D/g, '')
-
-    if (cleanCpf.length !== 11) {
-      setError('CPF inválido')
+    if (!birthDate) {
+      setError('Data de nascimento é obrigatória')
       return
     }
+
+    if (!isOver18(birthDate)) {
+      setError('Você precisa ter pelo menos 18 anos para se cadastrar')
+      return
+    }
+
+     const cleanPhone = formData.phone.replace(/\D/g, '')
+
+    
 
     if (cleanPhone.length < 10 || cleanPhone.length > 11) {
       setError('Telefone inválido')
@@ -82,18 +98,21 @@ export default function RegisterPage() {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        cpf: cleanCpf,
-        phone: cleanPhone
+      
+        phone: cleanPhone,
+        fullName: formData.fullName,
+        birthDate: birthDate.format('YYYY-MM-DD'),
+        termsAccepted: acceptedTerms,
       })
     } catch (err) {
       const error = err as AxiosError<{ message: string }>
+
       setError(error.response?.data?.message || 'Erro ao criar conta')
     } finally {
       setLoading(false)
     }
   }
 
- 
   return (
     <Container maxWidth="sm">
       <Box sx={{ 
@@ -138,6 +157,39 @@ export default function RegisterPage() {
               margin="normal"
               required
               fullWidth
+              label="Nome completo"
+              value={formData.fullName}
+              onChange={handleChange('fullName')}
+              disabled={loading}
+            />
+            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+              <DatePicker
+                label="Data de nascimento"
+                value={birthDate}
+                onChange={(newValue) => setBirthDate(newValue)}
+                format="DD/MM/YYYY"
+                slotProps={{
+                  textField: {
+                    margin: "normal",
+                    required: true,
+                    fullWidth: true,
+                    error: birthDate ? (!isOver18(birthDate) || birthDate.year() < 1900) : false,
+                    helperText: birthDate && (!isOver18(birthDate) 
+                      ? "Você precisa ter pelo menos 18 anos"
+                      : birthDate.year() < 1900 
+                        ? "Data de nascimento inválida"
+                        : "")
+                  }
+                }}
+                disableFuture
+                maxDate={dayjs().subtract(18, 'years')}
+                minDate={dayjs('1900-01-01')}
+              />
+            </LocalizationProvider>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
               label="Username"
               value={formData.username}
               onChange={handleChange('username')}
@@ -153,17 +205,7 @@ export default function RegisterPage() {
               onChange={handleChange('email')}
               disabled={loading}
             />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              label="CPF"
-              value={formData.cpf}
-              onChange={handleChange('cpf')}
-              disabled={loading}
-              inputProps={{ maxLength: 14 }}
-              placeholder="000.000.000-00"
-            />
+             
             <TextField
               margin="normal"
               required
@@ -195,6 +237,24 @@ export default function RegisterPage() {
               onChange={handleChange('confirmPassword')}
               disabled={loading}
             />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  color="primary"
+                />
+              }
+              label={
+                <Typography variant="body2">
+                  Li e aceito os{' '}
+                  <Link href="/terms" target="_blank" style={{ color: 'inherit', fontWeight: 'bold' }}>
+                   Termos de uso
+                  </Link>
+                </Typography>
+              }
+              sx={{ mt: 2 }}
+            />
             <Button
               type="submit"
               fullWidth
@@ -205,15 +265,11 @@ export default function RegisterPage() {
                 py: 1.5,
                 fontSize: '1.1rem'
               }}
-              disabled={loading}
+              disabled={loading || !acceptedTerms}
             >
               {loading ? 'Criando conta...' : 'Criar conta'}
             </Button>
           </Box>
-
- 
-            
-            
 
           <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary' }}>
             Já tem uma conta?{' '}

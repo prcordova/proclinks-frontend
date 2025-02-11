@@ -1,10 +1,8 @@
 'use client'
 
 import { useState } from "react"
-import { Button, Container, Typography, Box, Divider, Paper } from '@mui/material'
-import GitHubIcon from '@mui/icons-material/GitHub'
-import GoogleIcon from '@mui/icons-material/Google'
-import FacebookIcon from '@mui/icons-material/Facebook'
+import { Button, Container, Typography, Box,   Paper } from '@mui/material'
+ 
 import { Input } from "@/components/ui/input"
 import Link from 'next/link'
 import { useAuth } from '@/contexts/auth-context'
@@ -111,34 +109,7 @@ export default function LoginPage() {
             </Button>
           </Box>
 
-          <Divider sx={{ my: 3 }}>ou entre com</Divider>
-
-          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<GitHubIcon />}
-              disabled={loading}
-            >
-              GitHub
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<GoogleIcon />}
-              disabled={loading}
-            >
-              Google
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<FacebookIcon />}
-              disabled={loading}
-            >
-              Facebook
-            </Button>
-          </Box>
+         
 
           <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary' }}>
             Não tem uma conta?{' '}
