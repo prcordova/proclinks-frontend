@@ -92,7 +92,7 @@ export function PlanLocker({
               fontSize: '0.75rem'
             }}
           >
-            Upgrade para {requiredPlan}
+             {requiredPlan}
           </Button>
           <StarsIcon sx={{ 
             position: 'absolute',
