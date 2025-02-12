@@ -2,6 +2,7 @@ import { Box, Card, CardContent, Typography, Divider, FormControl, InputLabel, S
 import { ColorPickerField } from '@/components/color-picker-field'
 import { CustomAvatar } from '@/components/avatar'
 import { useState } from 'react'
+import { PlanLocker } from '@/components/plan-locker'
 
 interface AppearanceProps {
   settings: {
@@ -57,6 +58,7 @@ export function Appearance({
     }
   }
 
+ 
   return (
     <Card>
       <CardContent>
@@ -98,40 +100,65 @@ export function Appearance({
           gridTemplateColumns: '1fr',
           gap: 2
         }}>
-          <ColorPickerField
-            label="Cor de Fundo"
-            value={settings.backgroundColor}
-            onChange={(color) => handleChange('backgroundColor', color)}
-            isMobile={isMobile}
-          />
+          <PlanLocker
+            requiredPlan="GOLD"
+            currentPlan={user?.plan?.type}
+          >
+            <ColorPickerField
+              label="Cor de Fundo"
+              value={settings.backgroundColor}
+              onChange={(color) => handleChange('backgroundColor', color)}
+              isMobile={isMobile}
+            />
+          </PlanLocker>
 
-          <ColorPickerField
-            label="Cor dos Cards"
-            value={settings.cardColor}
-            onChange={(color) => handleChange('cardColor', color)}
-            isMobile={isMobile}
-          />
+          <PlanLocker
+            requiredPlan="GOLD"
+            currentPlan={user?.plan?.type}
+          >
+            <ColorPickerField
+              label="Cor dos Cards"
+              value={settings.cardColor}
+              onChange={(color) => handleChange('cardColor', color)}
+              isMobile={isMobile}
+            />
+          </PlanLocker>
 
-          <ColorPickerField
-            label="Cor do Texto"
-            value={settings.textColor}
-            onChange={(color) => handleChange('textColor', color)}
-            isMobile={isMobile}
-          />
+          <PlanLocker
+            requiredPlan="GOLD"
+            currentPlan={user?.plan?.type}
+          >
+            <ColorPickerField
+              label="Cor do Texto"
+              value={settings.textColor}
+              onChange={(color) => handleChange('textColor', color)}
+              isMobile={isMobile}
+            />
+          </PlanLocker>
 
-          <ColorPickerField
-            label="Cor do Texto dos Cards"
-            value={settings.cardTextColor}
-            onChange={(color) => handleChange('cardTextColor', color)}
-            isMobile={isMobile}
-          />
+          <PlanLocker
+            requiredPlan="GOLD"
+            currentPlan={user?.plan?.type}
+          >
+            <ColorPickerField
+              label="Cor do Texto dos Cards"
+              value={settings.cardTextColor}
+              onChange={(color) => handleChange('cardTextColor', color)}
+              isMobile={isMobile}
+            />
+          </PlanLocker>
 
-          <ColorPickerField
-            label="Cor dos Likes"
-            value={settings.likesColor}
-            onChange={(color) => handleChange('likesColor', color)}
-            isMobile={isMobile}
-          />
+          <PlanLocker
+            requiredPlan="GOLD"
+            currentPlan={user?.plan?.type}
+          >
+            <ColorPickerField
+              label="Cor dos Likes"
+              value={settings.likesColor}
+              onChange={(color) => handleChange('likesColor', color)}
+              isMobile={isMobile}
+            />
+          </PlanLocker>
         </Box>
 
         <Divider sx={{ my: 3 }} />
@@ -146,9 +173,13 @@ export function Appearance({
           gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr',
           gap: 2
         }}>
-          <FormControl fullWidth>
-            <InputLabel>Modo de Exibição</InputLabel>
-            <Select
+          <PlanLocker
+            requiredPlan="GOLD"
+            currentPlan={user?.plan?.type}
+          >
+            <FormControl fullWidth>
+              <InputLabel>Modo de Exibição</InputLabel>
+              <Select
               value={settings.displayMode}
               onChange={(e) => handleChange('displayMode', e.target.value)}
               size={isMobile ? "small" : "medium"}
@@ -157,10 +188,15 @@ export function Appearance({
               <MenuItem value="grid">Grade</MenuItem>
             </Select>
           </FormControl>
+          </PlanLocker>
 
-          <FormControl fullWidth>
-            <InputLabel>Estilo dos Cards</InputLabel>
-            <Select
+          <PlanLocker
+            requiredPlan="GOLD"
+            currentPlan={user?.plan?.type}
+          >
+            <FormControl fullWidth>
+              <InputLabel>Estilo dos Cards</InputLabel>
+              <Select
               value={settings.cardStyle}
               onChange={(e) => handleChange('cardStyle', e.target.value)}
               size={isMobile ? "small" : "medium"}
@@ -169,24 +205,18 @@ export function Appearance({
               <MenuItem value="square">Quadrado</MenuItem>
               <MenuItem value="pill">Pílula</MenuItem>
             </Select>
-          </FormControl>
+            </FormControl>
+          </PlanLocker>
+           
 
-          <FormControl fullWidth>
-            <InputLabel>Fonte</InputLabel>
-            <Select
-              value={settings.font}
-              onChange={(e) => handleChange('font', e.target.value)}
-              size={isMobile ? "small" : "medium"}
-            >
-              <MenuItem value="default">Padrão</MenuItem>
-              <MenuItem value="serif">Serif</MenuItem>
-              <MenuItem value="mono">Mono</MenuItem>
-            </Select>
-          </FormControl>
 
-          <FormControl fullWidth>
-            <InputLabel>Espaçamento</InputLabel>
-            <Select
+          <PlanLocker
+            requiredPlan="GOLD"
+            currentPlan={user?.plan?.type}
+          >
+            <FormControl fullWidth>
+              <InputLabel>Espaçamento</InputLabel>
+              <Select
               value={settings.spacing}
               onChange={(e) => handleChange('spacing', e.target.value)}
               size={isMobile ? "small" : "medium"}
@@ -196,6 +226,7 @@ export function Appearance({
               <MenuItem value={24}>Grande</MenuItem>
             </Select>
           </FormControl>
+          </PlanLocker>
         </Box>
       </CardContent>
     </Card>
