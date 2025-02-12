@@ -1,83 +1,126 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { 
-  Container, Typography, TextField, InputAdornment,
-  Box, Grid, Alert, Button
-} from '@mui/material'
-import SearchIcon from '@mui/icons-material/Search'
-import { ExplorerSidebar, FilterOption } from '@/components/explorer-sidebar'
-import { UserCard } from '@/components/user-card'
+import { memo, useCallback, useEffect, useState, useMemo } from 'react'
 import { userApi } from '@/services/api'
-import { useDebounce } from '@/hooks/useDebounce'
+import { FilterOptions, FilterOption } from '@/components/FilterOptions/filter-options'
+import { SearchInput } from '@/components/searchInput'
+import { ContainerCards } from '@/components/ContainerCard/container-cards'
+import { UserCard } from '@/components/user-card'
 import { useLoading } from '@/contexts/loading-context'
+import { Container, Typography, Box } from '@mui/material'
 
 interface User {
   _id: string
+  id?: string
   username: string
+  bio: string
   avatar?: string
-  bio?: string
   plan: {
     type: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
-    status: string
   }
   followers: number
   following: number
+  createdAt: string
 }
 
-export default function ExplorerPage() {
-  const [users, setUsers] = useState<{
-    searchResults: User[]
-    featuredUsers: User[]
-  }>({
-    searchResults: [],
-    featuredUsers: []
-  })
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
-   const [selectedFilter, setSelectedFilter] = useState<FilterOption>('popular')
-  const [searchQuery, setSearchQuery] = useState('')
-  const { setIsLoading  ,isLoading} = useLoading()
+interface UsersResponse {
+  searchResults: User[]
+  featuredUsers: User[]
+  page: number
+  hasMore: boolean
+}
 
-  const fetchUsers = async (pageNum: number, filter: FilterOption, search?: string) => {
-    setIsLoading(true)
+// Componente de filtro memorizado
+const FilterOptionsWrapper = memo(({ selectedFilter, onFilterChange }: { 
+  selectedFilter: FilterOption, 
+  onFilterChange: (filter: FilterOption) => void 
+}) => (
+  <FilterOptions selectedFilter={selectedFilter} onFilterChange={onFilterChange} />
+))
+
+FilterOptionsWrapper.displayName = 'FilterOptionsWrapper'
+
+// Componente de busca memorizado
+const SearchWrapper = memo(({ value, onChange }: { 
+  value: string, 
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void 
+}) => (
+  <SearchInput value={value} onChange={onChange} />
+))
+
+SearchWrapper.displayName = 'SearchWrapper'
+
+export default function ExplorerPage() {
+  const [selectedFilter, setSelectedFilter] = useState<FilterOption>('popular')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [users, setUsers] = useState<UsersResponse>({
+    searchResults: [],
+    featuredUsers: [],
+    page: 1,
+    hasMore: false
+  })
+  const { setIsLoading, isLoading } = useLoading()
+
+  const fetchUsers = useCallback(async (
+    pageNum: number,
+    filter: FilterOption,
+    search?: string
+  ) => {
     try {
       const response = await userApi.listUsers({
-
         page: pageNum,
         limit: 20,
         filter,
-        search
+        search: search?.trim()
       })
       
       setUsers(prev => ({
-        searchResults: pageNum === 1 ? response.data.searchResults : [...prev.searchResults, ...response.data.searchResults],
-        featuredUsers: response.data.featuredUsers
+        searchResults: search?.trim() 
+          ? response.data.searchResults 
+          : prev.searchResults,
+        featuredUsers: !search?.trim() 
+          ? response.data.featuredUsers 
+          : prev.featuredUsers,
+        page: response.data.page,
+        hasMore: response.data.hasMore
       }))
-      setHasMore(response.data.hasMore)
       setIsLoading(false)
     } catch (error) {
       console.error('Erro ao buscar usuários:', error)
-    } finally {
       setIsLoading(false)
     }
-  }
-
-  const debouncedSearch = useDebounce((...args: unknown[]) => {
-    const searchValue = args[0] as string
-    setPage(1)
-    fetchUsers(1, selectedFilter, searchValue)
-  }, 300)
+  }, [setIsLoading])
 
   useEffect(() => {
-    setPage(1)
-    fetchUsers(1, selectedFilter, searchQuery)
-  }, [selectedFilter, searchQuery])
+    const timer = setTimeout(() => {
+      if (searchQuery || selectedFilter) {
+        setIsLoading(true)
+        fetchUsers(1, selectedFilter, searchQuery)
+      }
+    }, searchQuery ? 500 : 0)
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
-    debouncedSearch(e.target.value)
-  }
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [fetchUsers, selectedFilter, searchQuery, setIsLoading])
+
+  const displayedUsers = useMemo(() => 
+    searchQuery ? users.searchResults : users.featuredUsers
+  , [searchQuery, users.searchResults, users.featuredUsers])
+
+  const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchQuery(value)
+    
+    if (!value.trim()) {
+      setIsLoading(true)
+      fetchUsers(1, selectedFilter, '')
+    }
+  }, [fetchUsers, selectedFilter])
+
+  const handleFilterChange = useCallback((filter: FilterOption) => {
+    setSelectedFilter(filter)
+  }, [setIsLoading, setSelectedFilter])
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -85,141 +128,26 @@ export default function ExplorerPage() {
         Explorar Perfis
       </Typography>
 
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: { xs: 'column', md: 'row' },
-        gap: 4,
-        maxWidth: '100%'
-      }}>
-        <Box sx={{ 
-          width: { xs: '100%', md: 280 },
-          flexShrink: 0
-        }}>
-          <ExplorerSidebar
-            selectedFilter={selectedFilter}
-            onFilterChange={setSelectedFilter}
-          />
-        </Box>
-
-        <Box sx={{ 
-          flex: 1,
-          maxWidth: '100%'
-        }}>
-          <Box sx={{ mb: 6 }}>
-            <TextField
-              fullWidth
-              placeholder="Buscar usuários..."
-              value={searchQuery}
-              onChange={handleSearch}
-              sx={{ 
-                mb: 3,
-                maxWidth: 600,
-                mx: 'auto',
-                display: 'block'
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                )
-              }}
-            />
-
-            {searchQuery && (
-              <Box sx={{ mb: 6 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                  Resultados da busca
-                </Typography>
-                {users.searchResults.length > 0 ? (
-                  <Grid 
-                    container 
-                    spacing={3} 
-                    justifyContent="center"
-                    sx={{ 
-                      '& .MuiGrid-item': {
-                        display: 'flex',
-                        justifyContent: 'center'
-                      }
-                    }}
-                  >
-                    {users.searchResults.map((user) => (
-                      <Grid 
-                        item 
-                        xs={12} 
-                        sm={6} 
-                        lg={4} 
-                        xl={3} 
-                        key={user._id}
-                      >
-                        <UserCard user={user} />
-                      </Grid>
-                    ))}
-                  </Grid>
-                ) : (
-                  <Alert severity="info">
-                    Nenhum usuário encontrado com &ldquo;{searchQuery}&rdquo;
-                  </Alert>
-                )}
-              </Box>
-            )}
-          </Box>
-
-          <Box>
-            <Typography variant="h6" sx={{ mb: 3 }}>
-              {searchQuery ? 'Outros usuários que podem te interessar' : 'Usuários em Destaque'}
-            </Typography>
-            <Grid 
-              container 
-              spacing={{ xs: 2, sm: 3 }}
-              columns={{ xs: 1, sm: 12, md: 12, lg: 12 }}
-              sx={{ 
-                width: '100%',
-                margin: '0 auto',
-                '& .MuiGrid-item': {
-                  display: 'flex',
-                  justifyContent: 'center',
-                  width: '100%'
-                }
-              }}
-            >
-              {users.featuredUsers.map((user) => (
-                <Grid 
-                  item 
-                  xs={1}
-                  sm={6}
-                  md={6}
-                  lg={4}
-                  key={user._id}
-                >
-                  <Box sx={{ 
-                    width: '100%', 
-                    maxWidth: 340,
-                    px: 1
-                  }}>
-                    <UserCard user={user} />
-                  </Box>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-
-          {hasMore && (
-            <Box sx={{ textAlign: 'center', mt: 4 }}>
-              <Button
-                variant="contained"
-                onClick={() => {
-                  setPage(prev => prev + 1)
-                  fetchUsers(page + 1, selectedFilter, searchQuery)
-                }}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Carregando...' : 'Carregar mais'}
-              </Button>
-            </Box>
-          )}
-        </Box>
+      <Box sx={{ display: 'flex', gap: 4, mb: 4 }}>
+        <FilterOptionsWrapper 
+          selectedFilter={selectedFilter} 
+          onFilterChange={handleFilterChange} 
+        />
+        <SearchWrapper 
+          value={searchQuery} 
+          onChange={handleSearch} 
+        />
       </Box>
+
+      <ContainerCards 
+        isEmpty={!isLoading && displayedUsers.length === 0}
+        emptyMessage={`Nenhum usuário ${searchQuery ? 'encontrado' : 'em destaque'}`}
+        isLoading={isLoading}
+      >
+        {displayedUsers.map((user) => (
+          <UserCard key={user._id} user={user} />
+        ))}
+      </ContainerCards>
     </Container>
   )
 }

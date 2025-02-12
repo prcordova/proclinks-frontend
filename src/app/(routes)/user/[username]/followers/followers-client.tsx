@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { userApi } from "@/services/api"
 import { UserCard } from "@/components/user-card"
 import toast from "react-hot-toast"
+import { ContainerCards } from '@/components/ContainerCard/container-cards'
 
 interface User {
   id: string
@@ -47,17 +48,14 @@ export default function FollowersClient({ username }: { username: string }) {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Seguidores de @{username}</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {followers.length === 0 ? (
-          <p className="text-center text-muted-foreground col-span-full">
-            Nenhum seguidor ainda
-          </p>
-        ) : (
-          followers.map((user) => (
-            <UserCard key={user.id} user={user} />
-          ))
-        )}
-      </div>
+      <ContainerCards 
+        isEmpty={followers.length === 0}
+        emptyMessage="Nenhum seguidor ainda"
+      >
+        {followers.map((user) => (
+          <UserCard key={user.id} user={user} />
+        ))}
+      </ContainerCards>
     </div>
   )
 } 

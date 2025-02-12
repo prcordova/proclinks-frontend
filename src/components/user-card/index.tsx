@@ -7,6 +7,7 @@ import { getImageUrl } from '@/utils/url'
 import { getPlanStyle } from '@/utils/planStyles'
 
 interface User {
+  _id: string
   username: string
   avatar?: string
   bio?: string
