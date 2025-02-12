@@ -44,14 +44,20 @@ export default function FollowingClient({ username }: { username: string }) {
   }
 
   return (
-    <div className="space-y-4">
-      {following.length === 0 ? (
-        <p className="text-center text-muted-foreground">Não está seguindo ninguém ainda</p>
-      ) : (
-        following.map((user) => (
-          <UserCard key={user.id} user={user} />
-        ))
-      )}
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Seguindo por @{username}</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {following.length === 0 ? (
+          <p className="text-center text-muted-foreground col-span-full">
+            Não está seguindo ninguém ainda
+          </p>
+        ) : (
+          following.map((user) => (
+            <UserCard key={user.id} user={user} />
+          ))
+        )}
+      </div>
     </div>
   )
 } 

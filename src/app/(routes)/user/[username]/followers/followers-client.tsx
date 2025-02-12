@@ -47,9 +47,11 @@ export default function FollowersClient({ username }: { username: string }) {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Seguidores de @{username}</h1>
       
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {followers.length === 0 ? (
-          <p className="text-center text-muted-foreground">Nenhum seguidor ainda</p>
+          <p className="text-center text-muted-foreground col-span-full">
+            Nenhum seguidor ainda
+          </p>
         ) : (
           followers.map((user) => (
             <UserCard key={user.id} user={user} />
