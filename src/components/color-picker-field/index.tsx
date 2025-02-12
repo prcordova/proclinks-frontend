@@ -23,15 +23,16 @@ export function ColorPickerField({ label, value, onChange, isMobile }: ColorPick
       <Box sx={{ 
         display: 'flex', 
         alignItems: 'center', 
+        justifyContent: 'space-between',
         gap: 2
       }}>
-        <Typography variant="subtitle1">
+        <Typography variant="subtitle1" sx={{ flex: 'none' }}>
           {label}
         </Typography>
         <Box
           onClick={() => setShowPicker(!showPicker)}
           sx={{
-            flex: 1,
+            width: 140,
             height: 36,
             borderRadius: 1,
             backgroundColor: value,
@@ -51,7 +52,7 @@ export function ColorPickerField({ label, value, onChange, isMobile }: ColorPick
           <Box sx={{ 
             position: 'absolute',
             top: '100%',
-            left: 0,
+            right: 0,
             zIndex: 9999,
             bgcolor: 'background.paper',
             boxShadow: 3,
