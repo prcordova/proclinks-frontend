@@ -25,6 +25,7 @@ import {
  
  
  import { Appearance } from '@/components/appearance'
+import UserInfo from '@/components/userInfo'
   
 interface LinkItem {
   id: string
@@ -711,35 +712,10 @@ export default function EditLinksPage() {
         </Typography>
       </Backdrop>
 
-      <div className="text-center mb-8 animate-fade-in">
-     
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mt-4">
-          {profileData.username}
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">@{profileData.username}</p>
-        <p className="mt-2 text-gray-700 dark:text-gray-300">{profileData.bio}</p>
-        
-        <div className="flex justify-center gap-4 mt-4">
-          <div className="text-sm">
-            <span className="font-medium dark:text-white">
-              {profileData.followers.length}
-            </span>
-            <span className="text-gray-500 dark:text-gray-400 ml-1">
-              seguidores
-            </span>
-          </div>
-          <div className="text-sm">
-            <span className="font-medium dark:text-white">
-              {profileData.following.length}
-            </span>
-            <span className="text-gray-500 dark:text-gray-400 ml-1">
-              seguindo
-            </span>
-          </div>
-        </div>
-
-       
-      </div>
+      <UserInfo username={profileData.username} 
+      bio={profileData.bio || ''}
+       followers={profileData.followers.length}
+       following={profileData.following.length} />
 
       <Box sx={{ py: 4 }}>
         <Typography variant="h4" gutterBottom>

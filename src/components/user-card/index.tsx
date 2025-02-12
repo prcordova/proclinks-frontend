@@ -1,10 +1,9 @@
-import { Avatar, Card, CardContent, Stack, Typography, Chip, Box, Grid } from '@mui/material'
-import PeopleIcon from '@mui/icons-material/People'
-import PersonAddIcon from '@mui/icons-material/PersonAdd'
-import FavoriteIcon from '@mui/icons-material/Favorite'
+import { Avatar, Card, CardContent, Stack } from '@mui/material'
+ 
 import Link from 'next/link'
 import { getImageUrl } from '@/utils/url'
 import { getPlanStyle } from '@/utils/planStyles'
+import UserInfo from '../userInfo'
 
 interface User {
   _id: string
@@ -47,114 +46,15 @@ export function UserCard({ user }: { user: User }) {
               {!user.avatar && user.username.slice(0, 2).toUpperCase()}
             </Avatar>
 
-            <Typography variant="h6" align="center" noWrap>
-              {user.username}
-            </Typography>
+            
+            
 
-            <Typography 
-              variant="body2" 
-              color="text.secondary"
-              align="center"
-              sx={{
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-                minHeight: 40,
-                maxHeight: 40,
-                width: '100%'
-              }}
-            >
-              {user.bio || 'Sem biografia'}
-            </Typography>
-
-            <Box sx={{ width: '100%' }}>
-              <Grid container spacing={2} justifyContent="center">
-                <Grid item xs={4}>
-                  <Stack alignItems="center" spacing={0.5}>
-                    <Chip
-                      icon={<PeopleIcon sx={{ fontSize: '1.2rem' }} />}
-                      label={typeof user.followers === 'number' ? user.followers : user.followers.length}
-                      size="small"
-                      sx={{
-                        minWidth: 80,
-                        border: 'none',
-                        backgroundColor: 'transparent',
-                        '& .MuiChip-label': {
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 0.5
-                        }
-                      }}
-                    />
-                    <Typography 
-                      variant="caption" 
-                      display="block" 
-                      textAlign="center"
-                    >
-                      Seguidores
-                    </Typography>
-                  </Stack>
-                </Grid>
-                
-                <Grid item xs={4}>
-                  <Stack alignItems="center" spacing={0.5}>
-                    <Chip
-                      icon={<PersonAddIcon sx={{ fontSize: '1.2rem' }} />}
-                      label={typeof user.following === 'number' ? user.following : user.following.length}
-                      size="small"
-                      sx={{
-                        minWidth: 80,
-                        border: 'none',
-                        backgroundColor: 'transparent',
-                        '& .MuiChip-label': {
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 0.5
-                        }
-                      }}
-                    />
-                    <Typography 
-                      variant="caption" 
-                      display="block" 
-                      textAlign="center"
-                    >
-                      Seguindo
-                    </Typography>
-                  </Stack>
-                </Grid>
-                
-                <Grid item xs={4}>
-                  <Stack alignItems="center" spacing={0.5}>
-                    <Chip
-                      icon={<FavoriteIcon sx={{ fontSize: '1.2rem' }} />}
-                      label={`${user.totalLikes || 0}`}
-                      size="small"
-                      sx={{
-                        minWidth: 80,
-                        border: 'none',
-                        backgroundColor: 'transparent',
-                        '& .MuiChip-label': {
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 0.5
-                        }
-                      }}
-                    />
-                    <Typography 
-                      variant="caption" 
-                      display="block" 
-                      textAlign="center"
-                    >
-                      Likes
-                    </Typography>
-                  </Stack>
-                </Grid>
-              </Grid>
-            </Box>
+            <UserInfo 
+              username={user.username} 
+              bio={user.bio} 
+              followers={typeof user.followers === 'number' ? user.followers : user.followers.length}
+              following={typeof user.following === 'number' ? user.following : user.following.length}
+            />
           </Stack>
         </CardContent>
       </Card>

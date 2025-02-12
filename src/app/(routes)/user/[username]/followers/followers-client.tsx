@@ -53,7 +53,7 @@ export default function FollowersClient({ username }: { username: string }) {
         emptyMessage="Nenhum seguidor ainda"
       >
         {followers.map((user) => (
-          <UserCard key={user.id} user={user} />
+          <UserCard key={user.id} user={{...user, _id: user.id}} />
         ))}
       </ContainerCards>
     </div>

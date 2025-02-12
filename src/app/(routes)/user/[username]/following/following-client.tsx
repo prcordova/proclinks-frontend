@@ -53,7 +53,7 @@ export default function FollowingClient({ username }: { username: string }) {
         emptyMessage="Não está seguindo ninguém ainda"
       >
         {following.map((user) => (
-          <UserCard key={user.id} user={user} />
+          <UserCard key={user.id} user={{...user, _id: user.id}} />
         ))}
       </ContainerCards>
     </div>
