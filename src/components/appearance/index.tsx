@@ -95,7 +95,7 @@ export function Appearance({
         
         <Box sx={{ 
           display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr',
+          gridTemplateColumns: '1fr',
           gap: 2
         }}>
           <ColorPickerField

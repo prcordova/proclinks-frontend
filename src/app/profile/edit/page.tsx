@@ -27,6 +27,7 @@ import {
  import { Appearance } from '@/components/appearance'
 import UserInfo from '@/components/userInfo'
 import { SortOptions } from '@/components/sort-options'
+import { AddLinkDialog } from '@/components/add-link-dialog'
   
 interface LinkItem {
   id: string
@@ -36,12 +37,6 @@ interface LinkItem {
   createdAt: string
   likes?: number
   order: number
-}
-
-interface NewLinkData {
-  title: string
-  url: string
-  visible: boolean
 }
 
 interface ProfileSettings {
@@ -86,12 +81,7 @@ interface ProfileData {
   following: string[]
 }
 
-interface LinkData {
-  title: string
-  url: string
-  visible: boolean
-}
-
+ 
 interface ApiLink {
   _id: string
   title: string
@@ -108,12 +98,7 @@ export default function EditLinksPage() {
   const { user } = useAuth()
   const [links, setLinks] = useState<LinkItem[]>([])
   const [loading, setLoading] = useState(true)
-   const [openNewLinkDialog, setOpenNewLinkDialog] = useState(false)
-  const [newLink, setNewLink] = useState<NewLinkData>({
-    title: '',
-    url: '',
-    visible: true
-  })
+ 
   const [hasChanges, setHasChanges] = useState(false)
   const [pendingLinks, setPendingLinks] = useState<LinkItem[]>([])
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialogState>({
@@ -148,6 +133,7 @@ export default function EditLinksPage() {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [profileData, setProfileData] = useState<ProfileData | null>(null)
+  const [openNewLinkDialog, setOpenNewLinkDialog] = useState(false)
 
   useEffect(() => {
     async function loadProfile() {
@@ -204,85 +190,40 @@ export default function EditLinksPage() {
     loadProfileData()
   }, [])
 
-  const handleAddLink = async () => {
+  const handleAddLink = async (linkData: { title: string; url: string; visible: boolean }) => {
     try {
       setLoading(true)
+      const response = await linkApi.createLink(linkData)
       
-      // Validar dados do novo link
-      if (!newLink.title || !newLink.url) {
-        setAlert({
-          open: true,
-          message: 'Título e URL são obrigatórios',
-          severity: 'error'
-        })
-        return
-      }
-
-      // Usar o método createLink do linkApi
-      const response = await linkApi.createLink({
-        title: newLink.title,
-        url: newLink.url,
-        visible: newLink.visible
-      } as LinkData)
-
       if (response.success) {
-        // Formatar o novo link para o formato esperado
-        const createdLink: LinkItem = {
+        const newLink: LinkItem = {
           id: response.data._id,
           title: response.data.title,
           url: response.data.url,
           visible: response.data.visible,
-          createdAt: response.data.createdAt,
-          order: response.data.order || 0,
-          likes: response.data.likes || 0
+          order: response.data.order,
+          likes: 0,
+          createdAt: response.data.createdAt || new Date().toISOString()
         }
-
-        // Atualizar os estados
-        setLinks(prev => [...prev, createdLink])
-        setPendingLinks(prev => [...prev, createdLink])
         
-        // Limpar o formulário e fechar o modal
-        setNewLink({ title: '', url: '', visible: true })
+        setLinks(prev => [...prev, newLink])
+        setPendingLinks(prev => [...prev, newLink])
         setOpenNewLinkDialog(false)
+        setHasChanges(true)
         
-        // Mostrar mensagem de sucesso
         setAlert({
           open: true,
           message: 'Link adicionado com sucesso',
           severity: 'success'
         })
-        
-        // Indicar que há mudanças não salvas
-        setHasChanges(true)
-      } else {
-        // Se a resposta não foi bem sucedida, mostrar a mensagem de erro da API
-        throw new Error(response.message)
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Erro ao criar link:', error)
-      
-      if (error instanceof Error) {
-        // Verificar se é um erro relacionado ao limite do plano
-        if (error.message.includes('currentPlan')) {
-          const match = error.message.match(/\{.*\}/)
-          if (match) {
-            const planInfo = JSON.parse(match[0])
-            setAlert({
-              open: true,
-              message: `Limite do plano ${planInfo.type} atingido (${planInfo.currentLinks}/${planInfo.maxLinks} links). Faça um upgrade para adicionar mais links.`,
-              severity: 'error'
-            })
-            // Fechar o modal quando for erro de limite de plano
-            setOpenNewLinkDialog(false)
-          }
-        } else {
-          setAlert({
-            open: true,
-            message: error.message,
-            severity: 'error'
-          })
-        }
-      }
+      setAlert({
+        open: true,
+        message: error instanceof Error ? error.message : 'Erro ao criar link',
+        severity: 'error'
+      })
     } finally {
       setLoading(false)
     }
@@ -1001,87 +942,13 @@ export default function EditLinksPage() {
           </DialogActions>
         </Dialog>
 
-        <Dialog
+        <AddLinkDialog
           open={openNewLinkDialog}
-          onClose={() => !loading && setOpenNewLinkDialog(false)}
-          maxWidth="sm"
-          fullWidth
-          sx={{
-            '& .MuiDialog-paper': {
-              margin: isMobile ? '16px' : '32px',
-              width: 'calc(100% - 32px)',
-              maxHeight: isMobile ? 'calc(100% - 32px)' : '80vh'
-            }
-          }}
-        >
-          <DialogTitle>
-            <Typography variant={isMobile ? 'h6' : 'h5'}>
-              Adicionar Novo Link
-            </Typography>
-          </DialogTitle>
-          <DialogContent>
-            <Box sx={{ 
-              pt: 2, 
-              display: 'flex', 
-              flexDirection: 'column', 
-              gap: 2,
-              '& .MuiTextField-root': {
-                minHeight: isMobile ? '48px' : '56px'
-              }
-            }}>
-              <TextField
-                label="Título"
-                value={newLink.title}
-                onChange={(e) => setNewLink(prev => ({ ...prev, title: e.target.value }))}
-                fullWidth
-                disabled={loading}
-                error={!newLink.title}
-                helperText={!newLink.title ? 'Título é obrigatório' : ''}
-                size={isMobile ? "small" : "medium"}
-              />
-              <TextField
-                label="URL"
-                value={newLink.url}
-                onChange={(e) => setNewLink(prev => ({ ...prev, url: e.target.value }))}
-                fullWidth
-                disabled={loading}
-                error={!newLink.url}
-                helperText={!newLink.url ? 'URL é obrigatória' : ''}
-                size={isMobile ? "small" : "medium"}
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={newLink.visible}
-                    onChange={(e) => setNewLink(prev => ({ ...prev, visible: e.target.checked }))}
-                    disabled={loading}
-                  />
-                }
-                label="Visível"
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions sx={{ p: isMobile ? 2 : 3 }}>
-            <Button 
-              onClick={() => setOpenNewLinkDialog(false)}
-              disabled={loading}
-              fullWidth={isMobile}
-              size={isMobile ? "small" : "medium"}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleAddLink}
-              disabled={loading || !newLink.title || !newLink.url}
-              variant="contained"
-              fullWidth={isMobile}
-              size={isMobile ? "small" : "medium"}
-              startIcon={loading ? <CircularProgress size={isMobile ? 16 : 20} /> : null}
-            >
-              {loading ? 'Adicionando...' : 'Adicionar'}
-            </Button>
-          </DialogActions>
-        </Dialog>
+          loading={loading}
+          isMobile={isMobile}
+          onClose={() => setOpenNewLinkDialog(false)}
+          onAdd={handleAddLink}
+        />
 
         {message && (
           <Box

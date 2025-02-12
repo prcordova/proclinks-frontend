@@ -1,4 +1,7 @@
-import { Box, Typography, TextField } from '@mui/material'
+import { Box, Typography, IconButton, ClickAwayListener } from '@mui/material'
+import { Close as CloseIcon } from '@mui/icons-material'
+import { HexColorPicker } from 'react-colorful'
+import { useState } from 'react'
 
 interface ColorPickerFieldProps {
   label: string
@@ -8,42 +11,89 @@ interface ColorPickerFieldProps {
 }
 
 export function ColorPickerField({ label, value, onChange, isMobile }: ColorPickerFieldProps) {
+  const [showPicker, setShowPicker] = useState(false)
+
   return (
-    <Box sx={{ mb: 3 }}>
-      <Typography gutterBottom variant={isMobile ? 'body2' : 'body1'}>
-        {label}
-      </Typography>
+    <Box sx={{ 
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 1,
+      position: 'relative'
+    }}>
       <Box sx={{ 
         display: 'flex', 
-        gap: 2, 
-        alignItems: 'center',
-        flexDirection: isMobile ? 'column' : 'row'
+        alignItems: 'center', 
+        gap: 2
       }}>
+        <Typography variant="subtitle1">
+          {label}
+        </Typography>
         <Box
+          onClick={() => setShowPicker(!showPicker)}
           sx={{
-            width: isMobile ? '100%' : 40,
-            height: 40,
-            borderRadius: 1,
-            bgcolor: value,
-            border: '2px solid #ddd'
-          }}
-        />
-        <TextField
-          type="color"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          sx={{ 
             flex: 1,
-            '& input': {
-              width: '100%',
-              height: '40px',
-              padding: '4px',
-              cursor: 'pointer'
+            height: 36,
+            borderRadius: 1,
+            backgroundColor: value,
+            border: '1px solid',
+            borderColor: 'divider',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            '&:hover': {
+              opacity: 0.9,
+              boxShadow: 1
             }
           }}
-          fullWidth
         />
       </Box>
+      {showPicker && (
+        <ClickAwayListener onClickAway={() => setShowPicker(false)}>
+          <Box sx={{ 
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            zIndex: 9999,
+            bgcolor: 'background.paper',
+            boxShadow: 3,
+            borderRadius: 1,
+            p: 1,
+            mt: 1,
+            '.react-colorful': {
+              backgroundColor: 'background.paper'
+            },
+            '.react-colorful__saturation': {
+              borderRadius: 1,
+              mb: 1
+            },
+            '.react-colorful__hue': {
+              borderRadius: 1
+            }
+          }}>
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'flex-end', 
+              mb: 1,
+              backgroundColor: 'background.paper'
+            }}>
+              <IconButton 
+                size="small" 
+                onClick={() => setShowPicker(false)}
+                sx={{ p: 0.5 }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+            <HexColorPicker
+              color={value}
+              onChange={onChange}
+              style={{ 
+                width: isMobile ? '280px' : '200px',
+                height: isMobile ? '180px' : '150px'
+              }}
+            />
+          </Box>
+        </ClickAwayListener>
+      )}
     </Box>
   )
 } 
