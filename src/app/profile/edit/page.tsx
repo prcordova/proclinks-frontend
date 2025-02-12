@@ -10,7 +10,7 @@ import {
   DialogContent, DialogActions, DialogContentText,
   Tabs, Tab, Card, CardContent,
   
-  ToggleButton, ToggleButtonGroup,
+  
   Snackbar, Alert, Link as MuiLink,
   IconButton,  useTheme, useMediaQuery, Backdrop, CircularProgress
 } from '@mui/material'
@@ -18,7 +18,7 @@ import {
   DragHandle as DragIcon, 
   Delete as DeleteIcon,
   Add as AddIcon,
-  Sort as SortIcon,
+ 
   Favorite as HeartIcon,
   FavoriteBorder as HeartOutlineIcon
 } from '@mui/icons-material'
@@ -26,6 +26,7 @@ import {
  
  import { Appearance } from '@/components/appearance'
 import UserInfo from '@/components/userInfo'
+import { SortOptions } from '@/components/sort-options'
   
 interface LinkItem {
   id: string
@@ -483,71 +484,57 @@ export default function EditLinksPage() {
     }
   }
 
-  const handleSortModeChange = async (mode: string) => {
-    if (!mode) return
+  const handleSortModeChange = (mode: 'custom' | 'date' | 'name' | 'likes') => {
+    setSettings(prev => ({
+      ...prev,
+      sortMode: mode
+    }))
+    setHasChanges(true)
+  }
 
-    setSettings(prev => ({ ...prev, sortMode: mode as ProfileSettings['sortMode'] }))
-    
-    const sortedLinks = [...links]
-    
-    switch (mode) {
-      case 'date':
-        sortedLinks.sort((a, b) => {
-          const dateA = new Date(a.createdAt).getTime()
-          const dateB = new Date(b.createdAt).getTime()
-          return dateB - dateA
-        })
-        break
-        
-      case 'name':
-        sortedLinks.sort((a, b) => {
-          const titleA = a.title.toLowerCase()
-          const titleB = b.title.toLowerCase()
-          return titleA.localeCompare(titleB)
-        })
-        break
-        
-      case 'likes':
-        sortedLinks.sort((a, b) => {
-          const likesA = a.likes || 0
-          const likesB = b.likes || 0
-          return likesB - likesA
-        })
-        break
-        
-      case 'custom':
-        sortedLinks.sort((a, b) => a.order - b.order)
-        break
-        
-      default:
-        return
-    }
-
+  const handleSort = async (mode: 'custom' | 'date' | 'name' | 'likes') => {
     try {
-      // Atualiza a ordem no backend
-      const linkIds = sortedLinks.map(link => link.id)
-      const response = await linkApi.reorder({ links: linkIds })
+      setIsSaving(true)
+      const response = await userApi.getMyProfile()
       
       if (response.success) {
-        // Atualiza os estados com a nova ordem
-        const updatedLinks = sortedLinks.map((link, index) => ({
-          ...link,
-          order: index
-        }))
-        setLinks(updatedLinks)
-        setPendingLinks(updatedLinks)
-        showAlert('Ordem atualizada com sucesso', 'success')
+        const formattedLinks = response.data.links
+          .sort((a: ApiLink, b: ApiLink) => {
+            switch (mode) {
+              case 'date':
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              case 'name':
+                return a.title.localeCompare(b.title)
+              case 'likes':
+                return (b.likes || 0) - (a.likes || 0)
+              default:
+                return a.order - b.order
+            }
+          })
+          .map((link: ApiLink) => ({
+            id: link._id,
+            title: link.title,
+            url: link.url,
+            visible: link.visible,
+            createdAt: link.createdAt,
+            order: link.order,
+            likes: link.likes || 0
+          }))
+
+        setLinks(formattedLinks)
+        setPendingLinks(formattedLinks)
       }
     } catch (error) {
-      console.error('Erro ao atualizar ordem:', error)
-      showAlert('Erro ao atualizar ordem', 'error')
-      // Reverte para a ordem anterior em caso de erro
-      setLinks(links)
-      setPendingLinks(links)
+      console.error('Erro ao ordenar links:', error)
+      setAlert({
+        open: true,
+        message: 'Erro ao ordenar links',
+        severity: 'error'
+      })
+    } finally {
+      setIsSaving(false)
     }
   }
- 
- 
 
   // Links de exemplo para o preview
   const [previewLinks, setPreviewLinks] = useState<PreviewLink[]>([
@@ -764,76 +751,12 @@ export default function EditLinksPage() {
               <Box>
                 <Card sx={{ mb: 3 }}>
                   <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                    <Typography variant="h6" gutterBottom>
-                      Ordenação
-                    </Typography>
-                    
-                    <ToggleButtonGroup
+                    <SortOptions
                       value={settings.sortMode}
-                      exclusive
-                      onChange={(_, mode) => handleSortModeChange(mode)}
-                      aria-label="ordenação"
-                      orientation={isMobile ? "vertical" : "horizontal"}
-                      fullWidth={isMobile}
-                      size={isMobile ? "small" : "medium"}
-                      sx={{
-                        display: 'flex',
-                        flexWrap: isMobile ? 'nowrap' : 'wrap',
-                        '& .MuiToggleButton-root': {
-                          flex: isMobile ? '1' : 'initial',
-                          px: isMobile ? 1 : 2
-                        }
-                      }}
-                    >
-                      <ToggleButton value="custom" aria-label="personalizada">
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: 1,
-                          width: '100%',
-                          justifyContent: 'center'
-                        }}>
-                          <DragIcon sx={{ fontSize: isMobile ? 18 : 24 }} />
-                          <span>Personalizada</span>
-                        </Box>
-                      </ToggleButton>
-                      <ToggleButton value="date" aria-label="data">
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: 1,
-                          width: '100%',
-                          justifyContent: 'center'
-                        }}>
-                          <SortIcon sx={{ fontSize: isMobile ? 18 : 24 }} />
-                          <span>Data</span>
-                        </Box>
-                      </ToggleButton>
-                      <ToggleButton value="name" aria-label="nome">
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: 1,
-                          width: '100%',
-                          justifyContent: 'center'
-                        }}>
-                          <SortIcon sx={{ fontSize: isMobile ? 18 : 24 }} />
-                          <span>Nome</span>
-                        </Box>
-                      </ToggleButton>
-                      <ToggleButton value="likes" aria-label="curtidas">
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: 1,
-                          width: '100%',
-                          justifyContent: 'center'
-                        }}>
-                          <SortIcon sx={{ fontSize: isMobile ? 18 : 24 }} />
-                          <span>Curtidas</span>
-                        </Box>
-                      </ToggleButton>
-                    </ToggleButtonGroup>
+                      onChange={handleSortModeChange}
+                      onSort={handleSort}
+                      isMobile={isMobile}
+                    />
                   </CardContent>
                 </Card>
 
