@@ -28,6 +28,7 @@ import {
 import UserInfo from '@/components/userInfo'
 import { SortOptions } from '@/components/sort-options'
 import { AddLinkDialog } from '@/components/add-link-dialog'
+import { PlanLocker } from '@/components/plan-locker'
   
 interface LinkItem {
   id: string
@@ -134,6 +135,7 @@ export default function EditLinksPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [profileData, setProfileData] = useState<ProfileData | null>(null)
   const [openNewLinkDialog, setOpenNewLinkDialog] = useState(false)
+  const [maxLinks, setMaxLinks] = useState(3)
 
   useEffect(() => {
     async function loadProfile() {
@@ -141,6 +143,7 @@ export default function EditLinksPage() {
         const response = await userApi.getMyProfile()
         if (response.success) {
           setProfileData(response.data)
+          setMaxLinks(response.data.plan.features.maxLinks || 3)
         }
       } catch (error) {
         console.error('Erro ao carregar perfil:', error)
@@ -167,12 +170,14 @@ export default function EditLinksPage() {
             order: link.order,
             likes: link.likes || 0
           }))
+          setMaxLinks(response.data.plan.features.maxLinks || 3)
 
           setLinks(formattedLinks)
           setPendingLinks(formattedLinks)
           
           // Apenas atualizando as settings com as preferências do usuário
           if (response.data.profile) {
+            setMaxLinks(response.data.plan.features.maxLinks || 3)
             setSettings(prevSettings => ({
               ...prevSettings,
               ...response.data.profile,
@@ -622,6 +627,12 @@ export default function EditLinksPage() {
     )
   }
 
+  const nextPlanMap = {
+    'FREE': 'BRONZE',
+    'BRONZE': 'SILVER',
+    'SILVER': 'GOLD',
+    'GOLD': 'GOLD'
+  }
   return (
     <Container maxWidth="lg">
       <Backdrop
@@ -679,14 +690,16 @@ export default function EditLinksPage() {
                 <Typography color="text.secondary">
                   Clique no botão abaixo para adicionar seu primeiro link
                 </Typography>
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={() => setOpenNewLinkDialog(true)}
-                  fullWidth={isMobile}
-                >
-                  Adicionar Link
-                </Button>
+              
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => setOpenNewLinkDialog(true)}
+                      fullWidth={isMobile}
+                    >
+                      Adicionar Link
+                    </Button>
+               
               </Box>
             ) : (
               <Box>
@@ -712,15 +725,30 @@ export default function EditLinksPage() {
                   <Typography variant="h5" sx={{ fontSize: isMobile ? '1.25rem' : '1.5rem' }}>
                     Gerenciar Links ({pendingLinks.length})
                   </Typography>
-                  <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => setOpenNewLinkDialog(true)}
-                    fullWidth={isMobile}
-                    size={isMobile ? "medium" : "large"}
+                  {links.length >= maxLinks ? (
+                  <PlanLocker
+                    requiredPlan={nextPlanMap[user?.plan?.type as keyof typeof nextPlanMap]  as 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'}
+                    currentPlan={user?.plan?.type}
                   >
-                    Adicionar Link
-                  </Button>
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => setOpenNewLinkDialog(true)}
+                      fullWidth={isMobile}
+                    >
+                      Adicionar Link
+                    </Button>
+                  </PlanLocker>
+                ) : (
+                  <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => setOpenNewLinkDialog(true)}
+                  fullWidth={isMobile}
+                >
+                  Adicionar Link
+                </Button>
+                )}
                 </Box>
 
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

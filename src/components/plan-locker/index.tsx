@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 
 interface PlanLockerProps {
   children: React.ReactNode
-  requiredPlan: 'BRONZE' | 'SILVER' | 'GOLD'
+  requiredPlan: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
   currentPlan?: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
   onUpgradeClick?: () => void
 }
