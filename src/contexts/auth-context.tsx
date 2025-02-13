@@ -120,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           following: response.data.user.following,
           plan: response.data.user.plan
         })
-        router.push('/profile')
+        router.push(`/user/${response.data.user.username}`)
       }
     } catch (error) {
       console.error('Erro no login:', error)
