@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   Container, Box, Typography, Card, CardContent, 
   Button, Chip, Divider, useTheme, useMediaQuery 
@@ -11,64 +11,102 @@ import {
   Star as StarIcon,
   Check as CheckIcon
 } from '@mui/icons-material'
-import { paymentApi } from '@/services/api'
-
-const plans = [
-  {
-    name: 'BRONZE',
-    icon: <StarIcon sx={{ fontSize: 40 }} />,
-    price: 'R$ 4,90',
-    color: '#CD7F32',
-    features: [
-      'Até 3 links',
-      'Ordenação personalizada dos links',
-      'Customização de cores de cards'
-    ],
-    recommended: false
-  },
-  {
-    name: 'SILVER',
-    icon: <PremiumIcon sx={{ fontSize: 40 }} />,
-    price: 'R$ 9,90',
-    color: '#C0C0C0',
-    features: [
-      'Até 10 links',
-      'Ordenação personalizada dos links',
-      'Customização de cores de cards',
-      'Customização de cores de textos de cards',
-      'Customização de cores de background',
-    ],
-    recommended: true
-  },
-  {
-    name: 'GOLD',
-    icon: <DiamondIcon sx={{ fontSize: 40 }} />,
-    price: 'R$ 29,90',
-    color: '#FFD700',
-    features: [
-      'Até 50 links',
-      'Ordenação personalizada dos links',
-      'Customização de cores de cards',
-      'Customização de cores de textos de cards',
-      'Customização de cores de background',
-      'Customização de cores de bordas',
-      'Customização de cores de ícones',
-      'Customização de cores de links',
-      'Icones personalizados',
-    ],
-    recommended: false
-  }
-]
-
+import {
+  paymentApi,
+  userApi
+} from '@/services/api'
+ 
 export default function SettingsPage() {
+  
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
+  const [currentPlan, setCurrentPlan] = useState<string>('FREE')
+
+  const plans = [
+   
+    {
+      name: 'FREE',
+      icon: <StarIcon sx={{ fontSize: 40 }} />,
+      price: 'R$ 0,00',
+      color: '#000000',
+      features: [
+        'Até 3 links',
+        'Navegação limitada',
+        
+         
+      ],
+      recommended: false
+    },
+    
+  
+    {
+      name: 'BRONZE',
+      icon: <StarIcon sx={{ fontSize: 40 }} />,
+      price: 'R$ 4,90',
+      color: '#CD7F32',
+      features: [
+        'Até 3 links',
+        'Ordenação personalizada dos links',
+        'Customização de cores de cards'
+      ],
+      recommended: false
+    },
+    {
+      name: 'SILVER',
+      icon: <PremiumIcon sx={{ fontSize: 40 }} />,
+      price: 'R$ 9,90',
+      color: '#C0C0C0',
+      features: [
+        'Até 10 links',
+        'Ordenação personalizada dos links',
+        'Customização de cores de cards',
+        'Customização de cores de textos de cards',
+        'Customização de cores de background',
+      ],
+      recommended: true
+    },
+    {
+      name: 'GOLD',
+      icon: <DiamondIcon sx={{ fontSize: 40 }} />,
+      price: 'R$ 29,90',
+      color: '#FFD700',
+      features: [
+        'Até 50 links',
+        'Ordenação personalizada dos links',
+        'Customização de cores de cards',
+        'Customização de cores de textos de cards',
+        'Customização de cores de background',
+        'Customização de cores de bordas',
+        'Customização de cores de ícones',
+        'Customização de cores de links',
+        'Icones personalizados',
+      ],
+      recommended: false
+    }
+  ]
+
+  useEffect(() => {
+    const fetchUserPlan = async () => {
+      try {
+        const userData = await userApi.getMyProfile();
+        setCurrentPlan(userData.data.plan.type);
+      } catch (error) {
+        console.error('Erro ao buscar plano do usuário:', error);
+      }
+    };
+
+    fetchUserPlan();
+  }, []);
+
+  const getButtonText = (planName: string) => {
+    if (planName === currentPlan) {
+      return 'Plano Atual';
+    }
+    return 'Assinar';
+  };
 
   const handleSubscribe = async (planName: string) => {
     try {
-      setSelectedPlan(planName);
-      
       const { url } = await paymentApi.createCheckoutSession(planName);
       
       if (url) {
@@ -78,7 +116,6 @@ export default function SettingsPage() {
       }
     } catch (error) {
       console.error('Erro ao iniciar checkout:', error);
-      setSelectedPlan(null);
       // Adicione aqui uma notificação de erro para o usuário
     }
   };
@@ -246,10 +283,10 @@ export default function SettingsPage() {
                 size="large"
                 fullWidth
                 onClick={() => handleSubscribe(plan.name)}
-                disabled={selectedPlan === plan.name}
+                disabled={plan.name === currentPlan}
                 sx={{ mt: 'auto' }}
               >
-                {selectedPlan === plan.name ? 'Processando...' : 'Assinar Agora'}
+                {getButtonText(plan.name)}
               </Button>
             </CardContent>
           </Card>
