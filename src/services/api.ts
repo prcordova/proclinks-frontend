@@ -204,4 +204,28 @@ export const linkApi = {
   }
 }
 
+export const paymentApi = {
+  createCheckoutSession: async (planName: string) => {
+    try {
+      const response = await api.post('/api/payments/create-checkout', {
+        plano: planName.toUpperCase()
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao criar sessão de checkout:', error);
+      throw error;
+    }
+  },
+
+  cancelSubscription: async () => {
+    try {
+      const response = await api.post('/api/payments/cancel-subscription');
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao cancelar assinatura:', error);
+      throw error;
+    }
+  }
+};
+
 export default api 

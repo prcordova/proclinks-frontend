@@ -11,6 +11,7 @@ import {
   Star as StarIcon,
   Check as CheckIcon
 } from '@mui/icons-material'
+import { paymentApi } from '@/services/api'
 
 const plans = [
  
@@ -73,9 +74,22 @@ export default function SettingsPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
 
   const handleSubscribe = async (planName: string) => {
-    setSelectedPlan(planName)
-    // Implementar integração com Stripe
-  }
+    try {
+      setSelectedPlan(planName);
+      
+      const { url } = await paymentApi.createCheckoutSession(planName);
+      
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error('URL de checkout não recebida');
+      }
+    } catch (error) {
+      console.error('Erro ao iniciar checkout:', error);
+      setSelectedPlan(null);
+      // Adicione aqui uma notificação de erro para o usuário
+    }
+  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 8 }}>
