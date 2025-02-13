@@ -14,24 +14,22 @@ import {
 import { paymentApi } from '@/services/api'
 
 const plans = [
- 
   {
-    name: 'Bronze',
+    name: 'BRONZE',
     icon: <StarIcon sx={{ fontSize: 40 }} />,
-    price: 'R$ 9,90',
+    price: 'R$ 4,90',
     color: '#CD7F32',
     features: [
       'Até 3 links',
       'Ordenação personalizada dos links',
-   
       'Customização de cores de cards'
     ],
     recommended: false
   },
   {
-    name: 'Prata',
+    name: 'SILVER',
     icon: <PremiumIcon sx={{ fontSize: 40 }} />,
-    price: 'R$ 19,90',
+    price: 'R$ 9,90',
     color: '#C0C0C0',
     features: [
       'Até 10 links',
@@ -39,30 +37,24 @@ const plans = [
       'Customização de cores de cards',
       'Customização de cores de textos de cards',
       'Customização de cores de background',
-  
-      
     ],
     recommended: true
   },
   {
-    name: 'Gold',
+    name: 'GOLD',
     icon: <DiamondIcon sx={{ fontSize: 40 }} />,
     price: 'R$ 29,90',
     color: '#FFD700',
     features: [
       'Até 50 links',
       'Ordenação personalizada dos links',
-   
       'Customização de cores de cards',
       'Customização de cores de textos de cards',
       'Customização de cores de background',
-     
       'Customização de cores de bordas',
       'Customização de cores de ícones',
       'Customização de cores de links',
       'Icones personalizados',
-
-     
     ],
     recommended: false
   }

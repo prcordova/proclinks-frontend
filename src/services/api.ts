@@ -208,7 +208,7 @@ export const paymentApi = {
   createCheckoutSession: async (planName: string) => {
     try {
       const response = await api.post('/api/payments/create-checkout', {
-        plano: planName.toUpperCase()
+        plano: planName.toUpperCase() // BRONZE, SILVER, GOLD
       });
       return response.data;
     } catch (error) {
