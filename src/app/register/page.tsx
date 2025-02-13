@@ -69,27 +69,36 @@ export default function RegisterPage() {
     setError('')
     setLoading(true)
 
+    // Validações do frontend
+    if (!formData.username || !formData.email || !formData.password || 
+        !formData.confirmPassword || !formData.phone || !formData.fullName || !birthDate) {
+      setError('Por favor, preencha todos os campos obrigatórios')
+      setLoading(false)
+      return
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('As senhas não coincidem')
+      setLoading(false)
       return
     }
 
     if (!birthDate) {
       setError('Data de nascimento é obrigatória')
+      setLoading(false)
       return
     }
 
     if (!isOver18(birthDate)) {
       setError('Você precisa ter pelo menos 18 anos para se cadastrar')
+      setLoading(false)
       return
     }
 
-     const cleanPhone = formData.phone.replace(/\D/g, '')
-
-    
-
+    const cleanPhone = formData.phone.replace(/\D/g, '')
     if (cleanPhone.length < 10 || cleanPhone.length > 11) {
       setError('Telefone inválido')
+      setLoading(false)
       return
     }
 
@@ -98,7 +107,6 @@ export default function RegisterPage() {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-      
         phone: cleanPhone,
         fullName: formData.fullName,
         birthDate: birthDate.format('YYYY-MM-DD'),
@@ -106,8 +114,12 @@ export default function RegisterPage() {
       })
     } catch (err) {
       const error = err as AxiosError<{ message: string }>
-
-      setError(error.response?.data?.message || 'Erro ao criar conta')
+      // Melhor tratamento da mensagem de erro do backend
+      if (error.response?.data?.message) {
+        setError(error.response.data.message);
+      } else {
+        setError('Erro ao criar conta. Por favor, verifique todos os campos.');
+      }
     } finally {
       setLoading(false)
     }
