@@ -20,10 +20,10 @@ const plans = [
     price: 'R$ 9,90',
     color: '#CD7F32',
     features: [
-      'Até 5 links',
-      'Personalização básica',
-      'Estatísticas simples',
-      'Suporte por email'
+      'Até 3 links',
+      'Ordenação personalizada dos links',
+   
+      'Customização de cores de cards'
     ],
     recommended: false
   },
@@ -34,10 +34,12 @@ const plans = [
     color: '#C0C0C0',
     features: [
       'Até 10 links',
-      'Personalização avançada',
-      'Estatísticas detalhadas',
-      'Suporte prioritário',
-      'Links programados'
+      'Ordenação personalizada dos links',
+      'Customização de cores de cards',
+      'Customização de cores de textos de cards',
+      'Customização de cores de background',
+  
+      
     ],
     recommended: true
   },
@@ -48,12 +50,18 @@ const plans = [
     color: '#FFD700',
     features: [
       'Até 50 links',
-      'Personalização total',
-      'Estatísticas em tempo real',
-      'Suporte VIP 24/7',
-      'Links programados',
-      'Domínio personalizado',
-      'Sem marca d\'água'
+      'Ordenação personalizada dos links',
+   
+      'Customização de cores de cards',
+      'Customização de cores de textos de cards',
+      'Customização de cores de background',
+     
+      'Customização de cores de bordas',
+      'Customização de cores de ícones',
+      'Customização de cores de links',
+      'Icones personalizados',
+
+     
     ],
     recommended: false
   }
