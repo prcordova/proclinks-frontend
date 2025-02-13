@@ -45,7 +45,7 @@ export default function SettingsPage() {
       price: 'R$ 4,90',
       color: '#CD7F32',
       features: [
-        'Até 3 links',
+        'Até 5 links',
         'Ordenação personalizada dos links',
         'Customização de cores de cards'
       ],
