@@ -13,6 +13,7 @@ import EditIcon from '@mui/icons-material/Edit'
 import { CustomLink } from '@/components/custom-link'
 import { useLoading } from '@/contexts/loading-context'
 
+
 interface UserLink {
   _id: string
   title: string
@@ -108,6 +109,8 @@ export function ProfileContent({ username }: { username: string }) {
   }, [username, loadProfile])
 
   const handleFollowClick = async () => {
+    console.log('currentUser', currentUser)
+    console.log('profile', profile)
     try {
       setIsLoading(true)
       
@@ -261,7 +264,7 @@ export function ProfileContent({ username }: { username: string }) {
           </Box>
 
           {/* Botão de Seguir - Não mostrar para o próprio perfil */}
-          {profile && currentUser && currentUser.id !== profile.userId && (
+          {profile && currentUser && currentUser?.username !== username && (
             <FollowButton 
               text={isFollowing ? BUTTON_TEXT.UNFOLLOW : BUTTON_TEXT.FOLLOW}
               isLoading={isLoading}
