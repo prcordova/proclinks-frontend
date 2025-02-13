@@ -243,9 +243,6 @@ export default function SettingsPage() {
       </Box>
 
       <Box sx={{ textAlign: 'center', mt: 8 }}>
-        <Typography variant="body2" color="text.secondary">
-          Todos os planos incluem 7 dias de teste grátis. Cancele a qualquer momento.
-        </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
           Precisa de mais informações? Entre em contato com nosso suporte.
         </Typography>
