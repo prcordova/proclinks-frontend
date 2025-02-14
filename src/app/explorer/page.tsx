@@ -128,15 +128,30 @@ export default function ExplorerPage() {
         Explorar Perfis
       </Typography>
 
-      <Box sx={{ display: 'flex', gap: 4, mb: 4 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 2,
+        mb: 4,
+        flexDirection: { xs: 'column', md: 'row' },
+        justifyContent: { md: 'space-between' },
+        alignItems: 'stretch',
+        '& > *': {
+          width: { xs: '100%', md: 'auto' }
+        },
+        '& .search-wrapper': {
+          width: { xs: '100%', md: '300px' }
+        }
+      }}>
         <FilterOptionsWrapper 
           selectedFilter={selectedFilter} 
           onFilterChange={handleFilterChange} 
         />
-        <SearchWrapper 
-          value={searchQuery} 
-          onChange={handleSearch} 
-        />
+        <Box className="search-wrapper">
+          <SearchWrapper 
+            value={searchQuery} 
+            onChange={handleSearch} 
+          />
+        </Box>
       </Box>
 
       <ContainerCards 
