@@ -321,8 +321,18 @@ export default function PlansPage() {
                 size="large"
                 fullWidth
                 onClick={() => handleSubscribe(plan.name)}
+                onTouchStart={() => console.log('Touch start:', plan.name)}
+                onTouchEnd={() => console.log('Touch end:', plan.name)}
                 disabled={plan.name === currentPlan}
-                sx={{ mt: 'auto' }}
+                sx={{ 
+                  mt: 'auto',
+                  position: 'relative',
+                  zIndex: 1,
+                  minHeight: '48px',
+                  '&:active': {
+                    transform: 'scale(0.98)'
+                  }
+                }}
               >
                 {getButtonText(plan.name)}
               </Button>
