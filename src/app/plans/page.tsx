@@ -113,7 +113,7 @@ export default function PlansPage() {
   };
 
   const handleSubscribe = async (planName: string) => {
-    if (currentPlan !== 'FREE' && planStatus === 'ACTIVE') {
+    if (currentPlan !== 'FREE') {
       setSelectedNewPlan(planName);
       setShowCancelDialog(true);
       return;
@@ -321,18 +321,8 @@ export default function PlansPage() {
                 size="large"
                 fullWidth
                 onClick={() => handleSubscribe(plan.name)}
-                onTouchStart={() => console.log('Touch start:', plan.name)}
-                onTouchEnd={() => console.log('Touch end:', plan.name)}
                 disabled={plan.name === currentPlan}
-                sx={{ 
-                  mt: 'auto',
-                  position: 'relative',
-                  zIndex: 1,
-                  minHeight: '48px',
-                  '&:active': {
-                    transform: 'scale(0.98)'
-                  }
-                }}
+                sx={{ mt: 'auto' }}
               >
                 {getButtonText(plan.name)}
               </Button>
