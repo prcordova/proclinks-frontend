@@ -187,14 +187,14 @@ export default function PlansPage() {
               display: 'flex',
               flexDirection: 'column',
               '&:hover': {
-                transform: 'translateY(-8px)',
+                transform: isMobile ? 'none' : 'translateY(-8px)',
                 boxShadow: theme.shadows[10]
               },
               ...(plan.recommended && {
                 border: `2px solid ${theme.palette.primary.main}`,
-                transform: 'scale(1.05)',
+                transform: isMobile ? 'none' : 'scale(1.05)',
                 '&:hover': {
-                  transform: 'translateY(-8px) scale(1.05)'
+                  transform: isMobile ? 'none' : 'translateY(-8px) scale(1.05)'
                 }
               })
             }}
