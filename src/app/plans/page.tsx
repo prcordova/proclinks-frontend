@@ -15,12 +15,17 @@ import {
   paymentApi,
   userApi
 } from '@/services/api'
- 
-export default function SettingsPage() {
+import { CancelPlan } from '@/components/CancelPlan'
+
+export default function PlansPage() {
   
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const [currentPlan, setCurrentPlan] = useState<string>('FREE')
+  const [expirationDate, setExpirationDate] = useState<string | null>(null)
+  const [planStatus, setPlanStatus] = useState<string>('INACTIVE')
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [selectedNewPlan, setSelectedNewPlan] = useState<string | null>(null)
 
   const plans = [
    
@@ -85,18 +90,20 @@ export default function SettingsPage() {
     }
   ]
 
-  useEffect(() => {
-    const fetchUserPlan = async () => {
-      try {
-        const userData = await userApi.getMyProfile();
-        setCurrentPlan(userData.data.plan.type);
-      } catch (error) {
-        console.error('Erro ao buscar plano do usuário:', error);
-      }
-    };
+  const fetchUserPlan = async () => {
+    try {
+      const userData = await userApi.getMyProfile()
+      setCurrentPlan(userData.data.plan.type)
+      setExpirationDate(userData.data.plan.expirationDate)
+      setPlanStatus(userData.data.plan.status)
+    } catch (error) {
+      console.error('Erro ao buscar plano do usuário:', error)
+    }
+  }
 
-    fetchUserPlan();
-  }, []);
+  useEffect(() => {
+    fetchUserPlan()
+  }, [])
 
   const getButtonText = (planName: string) => {
     if (planName === currentPlan) {
@@ -106,22 +113,53 @@ export default function SettingsPage() {
   };
 
   const handleSubscribe = async (planName: string) => {
+    if (currentPlan !== 'FREE' && planStatus === 'ACTIVE') {
+      setSelectedNewPlan(planName);
+      setShowCancelDialog(true);
+      return;
+    }
+
     try {
       const { url } = await paymentApi.createCheckoutSession(planName);
-      
       if (url) {
         window.location.href = url;
-      } else {
-        throw new Error('URL de checkout não recebida');
       }
     } catch (error) {
       console.error('Erro ao iniciar checkout:', error);
-      // Adicione aqui uma notificação de erro para o usuário
+    }
+  };
+
+  const handlePlanCancelled = () => {
+    fetchUserPlan();
+  };
+
+  const handleCancelAndProceed = async () => {
+    if (selectedNewPlan) {
+      const { url } = await paymentApi.createCheckoutSession(selectedNewPlan);
+      if (url) {
+        window.location.href = url;
+      }
     }
   };
 
   return (
     <Container maxWidth="lg" sx={{ py: 8 }}>
+      {currentPlan !== 'FREE' && (
+        <CancelPlan
+          currentPlan={currentPlan}
+          expirationDate={expirationDate}
+          planStatus={planStatus}
+          onPlanCancelled={handlePlanCancelled}
+          newPlan={selectedNewPlan || undefined}
+          onCancelAndProceed={handleCancelAndProceed}
+          showDialog={showCancelDialog}
+          onCloseDialog={() => {
+            setShowCancelDialog(false);
+            setSelectedNewPlan(null);
+          }}
+        />
+      )}
+
       <Box sx={{ textAlign: 'center', mb: 8 }}>
         <Typography variant="h3" component="h1" gutterBottom fontWeight="bold">
           Escolha seu Plano
