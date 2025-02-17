@@ -75,7 +75,7 @@ export default function FeedPage() {
                 Bem-vindo ao seu Feed!
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                Fique por dentro das novidades e atualizações do ProcLinks
+                Fique por dentro das novidades e atualizações do Melter
               </Typography>
             </Paper>
           </Grid>

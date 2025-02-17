@@ -26,7 +26,7 @@ export function Footer() {
         }}>
           <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
             <Typography variant="h6" color="text.primary" gutterBottom>
-              ProcLinks
+              Melter
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Compartilhe todos os seus links em um único lugar
@@ -54,7 +54,7 @@ export function Footer() {
           align="center" 
           sx={{ mt: 4 }}
         >
-          © {new Date().getFullYear()} ProcLinks. Todos os direitos reservados.
+          © {new Date().getFullYear()} Melter. Todos os direitos reservados.
         </Typography>
       </Container>
     </Box>

@@ -49,7 +49,7 @@ export function Header() {
         >
           <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
             <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main' }}>
-              ProcLinks
+              Melter
             </Typography>
           </Link>
 

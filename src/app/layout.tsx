@@ -12,7 +12,7 @@ import { Toaster } from 'react-hot-toast'
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ProcLinks - Seu hub de links personalizado",
+  title: "Melter - Seu hub de links personalizados",
   description: "Crie sua página personalizada e compartilhe seus links em um único lugar",
   icons: {
     icon: '/icon.ico'
