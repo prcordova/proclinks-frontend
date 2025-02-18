@@ -1,6 +1,6 @@
 'use client'
 
-import { IconButton, Tooltip } from '@mui/material'
+import { IconButton, Tooltip, Typography } from '@mui/material'
 import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty'
 import PeopleIcon from '@mui/icons-material/People'
@@ -17,16 +17,19 @@ interface FriendshipButtonProps {
 
 const statusConfig = {
   NONE: {
+    text: 'Adicionar amigo',
     icon: PersonAddIcon,
     tooltip: 'Adicionar amigo',
     color: 'primary'
   },
   PENDING: {
+    text: 'Cancelar solicitação',
     icon: HourglassEmptyIcon,
     tooltip: 'Solicitação pendente',
     color: 'warning'
   },
   FRIENDLY: {
+    text: 'Remover amizade',
     icon: PeopleIcon,
     tooltip: 'Remover amizade',
     color: 'success'
@@ -87,6 +90,7 @@ export function FriendshipButton({
       arrow
     >
       <span>
+        <Typography variant="body2" color="text.secondary">{config.text}</Typography>
         <IconButton
           onClick={handleClick}
           disabled={isLoading}
