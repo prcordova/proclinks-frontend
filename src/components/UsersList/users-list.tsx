@@ -17,6 +17,7 @@ interface User {
   }
   followers: number
   following: number
+  friendshipStatus?: 'NONE' | 'PENDING' | 'FRIENDLY'
 }
 
 interface UsersListProps {
@@ -38,9 +39,14 @@ export function UsersList({ searchQuery, selectedFilter }: UsersListProps) {
         search: searchQuery.trim()
       })
       
-      setUsers(searchQuery ? response.data.searchResults : response.data.featuredUsers)
+      const users = searchQuery 
+        ? response.data.data.searchResults 
+        : response.data.data.featuredUsers
+
+      setUsers(users || [])
     } catch (error) {
       console.error('Erro ao buscar usuários:', error)
+      setUsers([])
     } finally {
       setIsLoading(false)
     }
@@ -56,12 +62,16 @@ export function UsersList({ searchQuery, selectedFilter }: UsersListProps) {
 
   return (
     <ContainerCards 
-      isEmpty={!isLoading && users.length === 0}
+      isEmpty={!isLoading && users?.length === 0}
       emptyMessage={`Nenhum usuário ${searchQuery ? 'encontrado' : 'em destaque'}`}
       isLoading={isLoading}
     >
-      {users.map((user) => (
-        <UserCard key={user._id} user={user} />
+      {users?.map((user) => (
+        <UserCard 
+          key={user._id} 
+          user={user}
+          showFriendshipButton={true}
+        />
       ))}
     </ContainerCards>
   )

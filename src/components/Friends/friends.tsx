@@ -6,6 +6,16 @@ import { UserCard } from '@/components/user-card'
 import { ContainerCards } from '@/components/ContainerCard/container-cards'
 import { useLoading } from '@/contexts/loading-context'
 import { userApi } from '@/services/api'
+import { toast } from 'react-hot-toast'
+
+interface Friend {
+  id: string;
+  username: string;
+  bio: string;
+  avatar?: string;
+  friendshipId: string;
+  since: string;
+}
 
 interface User {
   _id: string
@@ -20,18 +30,74 @@ interface User {
   friendshipStatus?: 'NONE' | 'PENDING' | 'FRIENDLY'
 }
 
+interface PendingRequest {
+  id: string
+  user: {
+    _id: string
+    username: string
+    bio: string
+    avatar?: string
+    followers: number
+    following: number
+  }
+  createdAt: string
+}
+
+interface UserWithFriendship extends User {
+  friendshipId?: string;
+}
+
 interface FriendsProps {
   initialTab?: number
 }
 
 export function Friends({ initialTab = 0 }: FriendsProps) {
+  const [friends, setFriends] = useState<Friend[]>([])
+  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([])
+  const [suggestions, setSuggestions] = useState<UserWithFriendship[]>([])
   const [tabValue, setTabValue] = useState(initialTab)
-  const [friends, setFriends] = useState<User[]>([])
-  const [pendingRequests, setPendingRequests] = useState<User[]>([])
-  const [suggestions, setSuggestions] = useState<User[]>([])
-  const { setIsLoading, isLoading } = useLoading()
+  const { isLoading, setIsLoading } = useLoading()
 
-  const handleTabChange = useCallback(async (_: React.SyntheticEvent, newValue: number) => {
+  const fetchFriends = useCallback(async () => {
+    try {
+      const response = await userApi.listFriends()
+      setFriends(response.data.data)
+    } catch (error) {
+      console.error('Erro ao carregar amigos:', error)
+    }
+  }, [])
+
+  const fetchPendingRequests = useCallback(async () => {
+    try {
+      const response = await userApi.listPendingRequests()
+      setPendingRequests(response.data.data)
+    } catch (error) {
+      console.error('Erro ao carregar solicitações:', error)
+    }
+  }, [])
+
+  const handleFriendshipAction = useCallback(async (userId: string, action: 'accept' | 'reject', friendshipId?: string) => {
+    try {
+      if (action === 'accept') {
+        await userApi.acceptFriendRequest(userId)
+        toast.success('Solicitação aceita!')
+      } else {
+        await userApi.rejectFriendRequest(friendshipId || '')
+        toast.success('Solicitação recusada!')
+      }
+      
+      // Atualiza as listas
+      await Promise.all([
+        fetchFriends(),
+        fetchPendingRequests()
+      ])
+    } catch (error) {
+      console.error('Erro na ação de amizade:', error)
+      toast.error('Erro ao processar solicitação')
+    }
+  }, [fetchFriends, fetchPendingRequests])
+
+  const handleTabChange = useCallback(async (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue)
     setIsLoading(true)
 
@@ -41,9 +107,9 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
           const friendsResponse = await userApi.listFriends()
           setFriends(friendsResponse.data.data)
           break
-        case 1: // Solicitações Pendentes
-          const pendingResponse = await userApi.listPendingRequests()
-          setPendingRequests(pendingResponse.data.data)
+        case 1: // Solicitações
+          const requestsResponse = await userApi.listPendingRequests()
+          setPendingRequests(requestsResponse.data.data)
           break
         case 2: // Sugestões
           const suggestionsResponse = await userApi.listSuggestions()
@@ -58,36 +124,61 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
   }, [setIsLoading])
 
   const renderContent = () => {
-    let content: User[] = []
+    let content: UserWithFriendship[] = []
     let emptyMessage = ''
 
     switch (tabValue) {
       case 0:
-        content = friends
+        content = friends.map(friend => ({
+          _id: friend.id,
+          username: friend.username,
+          bio: friend.bio,
+          avatar: friend.avatar,
+          followers: 0,
+          following: 0,
+          friendshipStatus: 'FRIENDLY',
+          friendshipId: friend.friendshipId,
+          plan: { type: 'FREE' }
+        }))
         emptyMessage = 'Você ainda não tem amigos'
         break
       case 1:
-        content = pendingRequests
+        content = pendingRequests.map(request => ({
+          _id: request.user._id,
+          username: request.user.username,
+          bio: request.user.bio,
+          avatar: request.user.avatar,
+          followers: request.user.followers,
+          following: request.user.following,
+          friendshipStatus: 'PENDING',
+          friendshipId: request.id,
+          plan: { type: 'FREE' }
+        }))
         emptyMessage = 'Nenhuma solicitação pendente'
         break
       case 2:
-        content = suggestions
+        content = suggestions.filter(Boolean) as UserWithFriendship[]
         emptyMessage = 'Nenhuma sugestão disponível'
         break
     }
 
     return (
       <ContainerCards
+        key={tabValue}
         isEmpty={!isLoading && content.length === 0}
         emptyMessage={emptyMessage}
         isLoading={isLoading}
       >
         {content.map((user) => (
-          <UserCard 
-            key={user._id} 
-            user={user}
-            showFriendshipActions={tabValue === 1}
-          />
+          user && user._id ? (
+            <UserCard 
+              key={user._id}
+              user={user}
+              showFriendshipActions={tabValue === 1}
+              showFriendshipButton={true}
+              onFriendshipAction={handleFriendshipAction}
+            />
+          ) : null
         ))}
       </ContainerCards>
     )

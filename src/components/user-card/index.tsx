@@ -3,6 +3,9 @@ import Link from 'next/link'
 import { getImageUrl } from '@/utils/url'
 import { getPlanStyle } from '@/utils/planStyles'
 import UserInfo from '../userInfo'
+import { FriendshipButton } from '../FriendshipButton/friendship-button'
+import { useRouter } from 'next/navigation'
+ 
 
 interface User {
   _id: string
@@ -16,24 +19,62 @@ interface User {
     type: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
   }
   friendshipStatus?: 'NONE' | 'PENDING' | 'FRIENDLY'
+  friendshipId?: string
 }
 
 interface UserCardProps {
   user: User
   showFriendshipActions?: boolean
-  onAcceptFriend?: () => void
-  onRejectFriend?: () => void
+  showFriendshipButton?: boolean
+  onFriendshipAction?: (userId: string, action: 'accept' | 'reject', friendshipId?: string) => Promise<void>
 }
 
 export function UserCard({ 
   user, 
   showFriendshipActions,
-  onAcceptFriend,
-  onRejectFriend 
+  showFriendshipButton = true,
+  onFriendshipAction
 }: UserCardProps) {
+  const router = useRouter()
+
+  if (!user || !user.username) {
+    return null
+  }
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Não navega se o clique foi em um botão
+    if ((e.target as HTMLElement).closest('button')) {
+      e.preventDefault()
+      e.stopPropagation()
+      return
+    }
+    router.push(`/user/${user.username}`)
+  }
+
+  const handleAcceptFriend = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (onFriendshipAction) {
+      await onFriendshipAction(user._id, 'accept')
+    }
+  }
+
+  const handleRejectFriend = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (onFriendshipAction) {
+      await onFriendshipAction(user._id, 'reject', user.friendshipId)
+    }
+  }
+
   const cardContent = (
     <CardContent>
-      <Stack spacing={2} alignItems="center">
+      <Stack 
+        spacing={2} 
+        alignItems="center"
+        sx={{ cursor: 'pointer' }}
+        onClick={handleCardClick}
+      >
         <Avatar 
           src={user.avatar ? getImageUrl(user.avatar) || undefined : undefined}
           sx={{ 
@@ -43,15 +84,31 @@ export function UserCard({
             ...getPlanStyle(user.plan?.type)
           }}
         >
-          {!user.avatar && user.username.slice(0, 2).toUpperCase()}
+          {!user.avatar ? user.username.slice(0, 2).toUpperCase() : null}
         </Avatar>
 
-        <UserInfo 
-          username={user.username} 
-          bio={user.bio} 
-          followers={typeof user.followers === 'number' ? user.followers : user.followers.length}
-          following={typeof user.following === 'number' ? user.following : user.following.length}
-        />
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1,
+          justifyContent: 'center'
+        }}>
+          <UserInfo 
+            username={user.username} 
+            bio={user.bio} 
+            followers={Array.isArray(user.followers) ? user.followers.length : user.followers}
+            following={Array.isArray(user.following) ? user.following.length : user.following}
+          />
+          {showFriendshipButton && user.friendshipStatus && (
+            <Box onClick={e => e.stopPropagation()}>
+              <FriendshipButton
+                userId={user._id}
+                initialStatus={user.friendshipStatus}
+                size="small"
+              />
+            </Box>
+          )}
+        </Box>
 
         {showFriendshipActions && user.friendshipStatus === 'PENDING' && (
           <Box sx={{ 
@@ -64,10 +121,7 @@ export function UserCard({
               variant="contained"
               color="primary"
               fullWidth
-              onClick={(e) => {
-                e.preventDefault()
-                onAcceptFriend?.()
-              }}
+              onClick={handleAcceptFriend}
             >
               Aceitar
             </Button>
@@ -75,10 +129,7 @@ export function UserCard({
               variant="outlined"
               color="error"
               fullWidth
-              onClick={(e) => {
-                e.preventDefault()
-                onRejectFriend?.()
-              }}
+              onClick={handleRejectFriend}
             >
               Recusar
             </Button>
