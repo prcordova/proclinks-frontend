@@ -65,6 +65,7 @@ export function UsersList({ searchQuery, selectedFilter }: UsersListProps) {
       isEmpty={!isLoading && users?.length === 0}
       emptyMessage={`Nenhum usuário ${searchQuery ? 'encontrado' : 'em destaque'}`}
       isLoading={isLoading}
+      className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-3 [&>*]:h-[440px] [&>*]:min-h-[440px]"
     >
       {users?.map((user) => (
         <UserCard 

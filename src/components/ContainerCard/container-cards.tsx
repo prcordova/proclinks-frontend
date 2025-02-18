@@ -7,6 +7,7 @@ interface ContainerCardsProps {
   emptyMessage?: string
   isEmpty?: boolean
   isLoading?: boolean
+  className?: string
 }
 
 const UserCardSkeleton = () => (
@@ -19,7 +20,8 @@ export function ContainerCards({
   children, 
   emptyMessage = "Nenhum item encontrado",
   isEmpty = false,
-  isLoading = false
+  isLoading = false,
+  className
 }: ContainerCardsProps) {
   if (isLoading) {
     return (
@@ -32,7 +34,7 @@ export function ContainerCards({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 [&>*]:h-[520px] ${className || ''}`}>
       {isEmpty ? (
         <p className="text-center text-muted-foreground col-span-full">
           {emptyMessage}
