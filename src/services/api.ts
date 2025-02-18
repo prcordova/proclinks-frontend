@@ -161,11 +161,14 @@ export const userApi = {
 
   listFriends: () => api.get('/api/friendships/friends'),
   listPendingRequests: () => api.get('/api/friendships/requests/sent'),
-  acceptFriendRequest: (requestId: string) => api.post(`/api/friendships/requests/${requestId}/accept`),
-  rejectFriendRequest: (requestId: string) => api.delete(`/api/friendships/requests/${requestId}`),
+  acceptFriendRequest: (requestId: string) => 
+    api.post(`/api/friendships/requests/${requestId}/accept`),
+  rejectFriendRequest: (requestId: string) => 
+    api.post(`/api/friendships/requests/${requestId}/reject`),
   sendFriendRequest: (data: { recipientId: string }) => api.post('/api/friendships/requests', data),
   listSuggestions: () => api.get('/api/friendships/suggestions'),
   listReceivedRequests: () => api.get('/api/friendships/requests/received'),
+  unfriend: (friendshipId: string) => api.post(`/api/friendships/${friendshipId}/unfriend`),
 }
 
 export const linkApi = {

@@ -6,8 +6,7 @@ import { UserCard } from '@/components/user-card'
 import { ContainerCards } from '@/components/ContainerCard/container-cards'
 import { useLoading } from '@/contexts/loading-context'
 import { userApi } from '@/services/api'
-import { toast } from 'react-hot-toast'
-
+ 
 interface Friend {
   id: string;
   username: string;
@@ -32,6 +31,7 @@ interface User {
 
 interface PendingRequest {
   id: string
+  status: 'NONE' | 'PENDING' | 'FRIENDLY'
   user: {
     _id: string
     username: string
@@ -95,28 +95,32 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
     }
   }, [])
 
-  const handleFriendshipAction = useCallback(async (userId: string, action: 'accept' | 'reject', friendshipId?: string) => {
+  const handleFriendshipAction = async (userId: string, action: 'accept' | 'reject', friendshipId?: string) => {
     try {
-      if (action === 'accept') {
-        await userApi.acceptFriendRequest(userId)
-        toast.success('Solicitação aceita!')
-      } else {
-        await userApi.rejectFriendRequest(friendshipId || '')
-        toast.success('Solicitação recusada!')
+      setIsLoading(true)
+      
+      if (action === 'accept' && friendshipId) {
+        await userApi.acceptFriendRequest(friendshipId)
+        
+        // Remove a solicitação aceita da lista de recebidas
+        setReceivedRequests(prev => prev.filter(request => request.id !== friendshipId))
+        
+        // Atualiza a lista de amigos
+        const friendsResponse = await userApi.listFriends()
+        setFriends(friendsResponse.data.data)
+        
+      } else if (action === 'reject' && friendshipId) {
+        await userApi.rejectFriendRequest(friendshipId)
+        // Remove a solicitação rejeitada da lista
+        setReceivedRequests(prev => prev.filter(request => request.id !== friendshipId))
       }
       
-      // Atualiza as listas
-      await Promise.all([
-        fetchFriends(),
-        fetchPendingRequests(),
-        fetchReceivedRequests(),
-        fetchSuggestions()
-      ])
     } catch (error) {
-      console.error('Erro na ação de amizade:', error)
-      toast.error('Erro ao processar solicitação')
+      console.error('Erro ao executar ação de amizade:', error)
+    } finally {
+      setIsLoading(false)
     }
-  }, [fetchFriends, fetchPendingRequests, fetchReceivedRequests, fetchSuggestions])
+  }
 
   const handleTabChange = useCallback(async (_event: React.SyntheticEvent | null, newValue: number) => {
     setTabValue(newValue)
@@ -148,54 +152,50 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
   }, [handleTabChange, tabValue])
 
   const getCurrentContent = () => {
-    let content: UserWithFriendship[] = []
-
     switch (tabValue) {
-      case 0:
-        content = friends.map(friend => ({
+      case 0: // Amigos
+        return friends.map(friend => ({
           _id: friend.id,
           username: friend.username,
           bio: friend.bio,
           avatar: friend.avatar,
           followers: 0,
           following: 0,
-          friendshipStatus: 'FRIENDLY',
+          friendshipStatus: 'FRIENDLY' as const,
           friendshipId: friend.friendshipId,
-          plan: { type: 'FREE' }
+          plan: { type: 'FREE' as const }
         }))
-        break
-      case 1:
-        content = pendingRequests.map(request => ({
+      case 1: // Solicitações Enviadas
+        return pendingRequests.map(request => ({
           _id: request.user._id,
           username: request.user.username,
           bio: request.user.bio,
           avatar: request.user.avatar,
           followers: request.user.followers,
           following: request.user.following,
-          friendshipStatus: 'PENDING',
+          friendshipStatus: 'PENDING' as const,
           friendshipId: request.id,
-          plan: { type: 'FREE' }
+          friendshipInitiator: 'ME' as const,
+          plan: { type: 'FREE' as const }
         }))
-        break
-      case 2:
-        content = receivedRequests.map(request => ({
+      case 2: // Solicitações Recebidas
+        return receivedRequests.map(request => ({
           _id: request.user._id,
           username: request.user.username,
           bio: request.user.bio,
           avatar: request.user.avatar,
           followers: request.user.followers,
           following: request.user.following,
-          friendshipStatus: 'FRIENDLY',
+          friendshipStatus: 'PENDING' as const,
           friendshipId: request.id,
-          plan: { type: 'FREE' }
+          friendshipInitiator: 'THEM' as const,
+          plan: { type: 'FREE' as const }
         }))
-        break
       case 3:
-        content = suggestions.filter(Boolean) as UserWithFriendship[]
-        break
+        return suggestions
+      default:
+        return []
     }
-
-    return content
   }
 
   const getEmptyMessage = () => {

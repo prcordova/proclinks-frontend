@@ -3,7 +3,7 @@ import { Avatar, Card, CardContent,  Button, Box, Typography } from '@mui/materi
 import { getPlanStyle } from '@/utils/planStyles'
  import { FriendshipButton } from '../FriendshipButton/friendship-button'
 import { useRouter } from 'next/navigation'
- 
+import { useAuth } from '@/contexts/auth-context'
 
 interface User {
   _id: string
@@ -19,6 +19,7 @@ interface User {
   friendshipStatus?: 'NONE' | 'PENDING' | 'FRIENDLY'
   friendshipId?: string
   friendshipInitiator?: 'ME' | 'THEM'
+  recipient?: string
 }
 
 interface UserCardProps {
@@ -35,6 +36,7 @@ export function UserCard({
   onFriendshipAction
 }: UserCardProps) {
   const router = useRouter()
+  const { user: currentUser } = useAuth()
 
   if (!user || !user.username) {
     return null
@@ -44,11 +46,10 @@ export function UserCard({
     router.push(`/user/${user.username}`)
   }
 
-  const handleAcceptFriend = async (e: React.MouseEvent) => {
+  const handleAcceptFriend = (e: React.MouseEvent) => {
     e.preventDefault()
-    e.stopPropagation()
-    if (onFriendshipAction) {
-      await onFriendshipAction(user._id, 'accept')
+    if (onFriendshipAction && user._id) {
+      onFriendshipAction(user._id, 'accept', user.friendshipId)
     }
   }
 
@@ -59,6 +60,8 @@ export function UserCard({
       await onFriendshipAction(user._id, 'reject', user.friendshipId)
     }
   }
+
+  const isRecipient = currentUser?.id === user.recipient
 
   return (
     <Card sx={{ 
@@ -145,7 +148,7 @@ export function UserCard({
           )}
 
           {/* Solicitações que EU enviei - apenas botão de cancelar */}
-          {showFriendshipButton && user.friendshipStatus === 'PENDING' && user.friendshipInitiator === 'ME' && (
+          {showFriendshipButton && user.friendshipStatus === 'PENDING' && !isRecipient && (
             <Box sx={{ width: '100%', mt: 'auto' }}>
               <Button
                 variant="outlined"
@@ -162,7 +165,7 @@ export function UserCard({
           )}
 
           {/* Solicitações que EU recebi - botões de aceitar/recusar */}
-          {showFriendshipActions && user.friendshipStatus === 'PENDING' && user.friendshipInitiator === 'THEM' && (
+          {showFriendshipActions && user.friendshipStatus === 'PENDING' && isRecipient && (
             <Box sx={{ 
               display: 'flex', 
               gap: 1, 
