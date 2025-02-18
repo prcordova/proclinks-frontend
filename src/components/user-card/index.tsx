@@ -68,75 +68,79 @@ export function UserCard({
   }
 
   const cardContent = (
-    <CardContent>
-      <Stack 
-        spacing={2} 
-        alignItems="center"
-        sx={{ cursor: 'pointer' }}
-        onClick={handleCardClick}
+    <>
+      <Avatar 
+        src={user.avatar ? getImageUrl(user.avatar) || undefined : undefined}
+        sx={{ 
+          width: '100%',
+          height: 200,
+          borderRadius: 0,
+          border: 3,
+          ...getPlanStyle(user.plan?.type)
+        }}
       >
-        <Avatar 
-          src={user.avatar ? getImageUrl(user.avatar) || undefined : undefined}
-          sx={{ 
-            width: 120,
-            height: 120,
-            border: 3,
-            ...getPlanStyle(user.plan?.type)
-          }}
+        {!user.avatar ? user.username.slice(0, 2).toUpperCase() : null}
+      </Avatar>
+
+      <CardContent>
+        <Stack 
+          spacing={2} 
+          alignItems="center"
+          sx={{ cursor: 'pointer' }}
+          onClick={handleCardClick}
         >
-          {!user.avatar ? user.username.slice(0, 2).toUpperCase() : null}
-        </Avatar>
-
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 1,
-          justifyContent: 'center'
-        }}>
-          <UserInfo 
-            username={user.username} 
-            bio={user.bio} 
-            followers={Array.isArray(user.followers) ? user.followers.length : user.followers}
-            following={Array.isArray(user.following) ? user.following.length : user.following}
-          />
-          {showFriendshipButton && user.friendshipStatus && (
-            <Box onClick={e => e.stopPropagation()}>
-              <FriendshipButton
-                userId={user._id}
-                initialStatus={user.friendshipStatus}
-                size="small"
-              />
-            </Box>
-          )}
-        </Box>
-
-        {showFriendshipActions && user.friendshipStatus === 'PENDING' && (
           <Box sx={{ 
             display: 'flex', 
-            gap: 1, 
-            width: '100%',
-            mt: 1 
+            flexDirection: 'column',
+            alignItems: 'center', 
+            gap: 1,
+            width: '100%'
           }}>
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              onClick={handleAcceptFriend}
-            >
-              Aceitar
-            </Button>
-            <Button
-              variant="outlined"
-              color="error"
-              fullWidth
-              onClick={handleRejectFriend}
-            >
-              Recusar
-            </Button>
+            <UserInfo 
+              username={user.username} 
+              bio={user.bio} 
+              followers={Array.isArray(user.followers) ? user.followers.length : user.followers}
+              following={Array.isArray(user.following) ? user.following.length : user.following}
+            />
+            {showFriendshipButton && user.friendshipStatus && (
+              <Box onClick={e => e.stopPropagation()} sx={{ width: '100%' }}>
+                <FriendshipButton
+                  userId={user._id}
+                  initialStatus={user.friendshipStatus}
+                  size="small"
+                />
+              </Box>
+            )}
           </Box>
-        )}
-      </Stack>
-    </CardContent>
+
+          {showFriendshipActions && user.friendshipStatus === 'PENDING' && (
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 1, 
+              width: '100%',
+              mt: 1 
+            }}>
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                onClick={handleAcceptFriend}
+              >
+                Aceitar
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                fullWidth
+                onClick={handleRejectFriend}
+              >
+                Recusar
+              </Button>
+            </Box>
+          )}
+        </Stack>
+      </CardContent>
+    </>
   )
 
   if (showFriendshipActions) {

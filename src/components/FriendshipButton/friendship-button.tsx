@@ -1,6 +1,6 @@
 'use client'
 
-import { IconButton, Tooltip, Typography } from '@mui/material'
+import { Button, Dialog, DialogTitle, DialogActions } from '@mui/material'
 import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty'
 import PeopleIcon from '@mui/icons-material/People'
@@ -11,7 +11,6 @@ import { toast } from 'react-hot-toast'
 interface FriendshipButtonProps {
   userId: string
   initialStatus: 'NONE' | 'PENDING' | 'FRIENDLY'
-  onStatusChange?: (newStatus: 'NONE' | 'PENDING' | 'FRIENDLY') => void
   size?: 'small' | 'medium' | 'large'
 }
 
@@ -19,94 +18,103 @@ const statusConfig = {
   NONE: {
     text: 'Adicionar amigo',
     icon: PersonAddIcon,
-    tooltip: 'Adicionar amigo',
-    color: 'primary'
+    color: 'primary',
+    variant: 'contained'
   },
   PENDING: {
-    text: 'Cancelar solicitação',
+    text: 'Solicitação enviada',
     icon: HourglassEmptyIcon,
-    tooltip: 'Solicitação pendente',
-    color: 'warning'
+    color: 'warning',
+    variant: 'outlined'
   },
   FRIENDLY: {
-    text: 'Remover amizade',
+    text: 'Amigos',
     icon: PeopleIcon,
-    tooltip: 'Remover amizade',
-    color: 'success'
+    color: 'success',
+    variant: 'outlined'
   }
 } as const
 
-export function FriendshipButton({ 
-  userId, 
-  initialStatus, 
-  onStatusChange,
-  size = 'medium' 
-}: FriendshipButtonProps) {
+export function FriendshipButton({ userId, initialStatus, size = 'medium' }: FriendshipButtonProps) {
   const [status, setStatus] = useState(initialStatus)
-  const [isLoading, setIsLoading] = useState(false)
+  const [openDialog, setOpenDialog] = useState(false)
+  
+  const config = statusConfig[status]
+  const Icon = config.icon
 
-  const handleClick = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-
+  const handleConfirmRemove = async () => {
     try {
-      setIsLoading(true)
+      await userApi.rejectFriendRequest(userId)
+      setStatus('NONE')
+      toast.success('Amizade removida!')
+    } catch (error: Error | unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao processar solicitação'
+      toast.error(errorMessage)
+    }
+    setOpenDialog(false)
+  }
 
+  const handleClick = async () => {
+    try {
       switch (status) {
         case 'NONE':
           await userApi.sendFriendRequest({ recipientId: userId })
           setStatus('PENDING')
           toast.success('Solicitação de amizade enviada!')
           break
-
         case 'PENDING':
           await userApi.rejectFriendRequest(userId)
           setStatus('NONE')
           toast.success('Solicitação de amizade cancelada!')
           break
-
         case 'FRIENDLY':
-          await userApi.rejectFriendRequest(userId)
-          setStatus('NONE')
-          toast.success('Amizade removida!')
+          setOpenDialog(true)
           break
       }
-
-      onStatusChange?.(status)
-    } catch (error) {
-      console.error('Erro detalhado:', error)
-      toast.error('Erro ao processar solicitação')
-    } finally {
-      setIsLoading(false)
+    } catch (error: Error | unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao processar solicitação'
+      toast.error(errorMessage)
     }
   }
 
-  const config = statusConfig[status]
-  const Icon = config.icon
-
   return (
-    <Tooltip 
-      title={isLoading ? 'Processando...' : config.tooltip}
-      arrow
-    >
-      <span>
-        <Typography variant="body2" color="text.secondary">{config.text}</Typography>
-        <IconButton
-          onClick={handleClick}
-          disabled={isLoading}
-          size={size}
-          color={config.color as 'primary' | 'warning' | 'success'}
-          aria-label={config.tooltip}
-          sx={{
-            '&:hover': {
-              transform: 'scale(1.1)',
-            },
-            transition: 'transform 0.2s'
-          }}
-        >
-          <Icon />
-        </IconButton>
-      </span>
-    </Tooltip>
+    <>
+      <Button
+        variant={config.variant}
+        color={config.color}
+        size={size}
+        fullWidth
+        startIcon={<Icon />}
+        sx={{
+          py: 1,
+          textTransform: 'none',
+          fontWeight: 'medium',
+          '&:hover': {
+            transform: 'scale(1.02)'
+          },
+          transition: 'transform 0.2s'
+        }}
+        onClick={handleClick}
+      >
+        {config.text}
+      </Button>
+
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+      >
+        <DialogTitle>
+          Tem certeza que deseja remover esta amizade?
+        </DialogTitle>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)} color="primary">
+            Cancelar
+          </Button>
+          <Button onClick={handleConfirmRemove} color="error" variant="contained">
+            Remover
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   )
 } 
