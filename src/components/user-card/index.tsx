@@ -66,8 +66,8 @@ export function UserCard({
   return (
     <Card sx={{ 
       height: '100%',
-      minWidth: 230,
-      maxWidth: '100%',
+      minWidth: 250,
+      maxWidth: '290px',
       '&:hover': { 
         transform: 'translateY(-4px)',
         boxShadow: 4
@@ -75,23 +75,27 @@ export function UserCard({
       transition: 'all 0.2s'
     }}>
       {/* Área clicável apenas na imagem */}
-      <div 
+      <Box 
         onClick={handleCardClick}
-        style={{ cursor: 'pointer' }}
+        style={{ 
+          cursor: 'pointer',
+          display: 'flex',
+          justifyContent: 'center',
+          padding: '20px'
+        }}
       >
         <Avatar 
           src={user.avatar ? getImageUrl(user.avatar) || undefined : undefined}
           sx={{ 
-            width: '100%',
-            height: 280,
-            borderRadius: 0,
+            width: 120,
+            height: 120,
             border: 3,
             ...getPlanStyle(user.plan?.type)
           }}
         >
           {!user.avatar ? user.username.slice(0, 2).toUpperCase() : null}
         </Avatar>
-      </div>
+      </Box>
 
       {/* Área de informações não clicável */}
       <CardContent sx={{ 
@@ -148,21 +152,7 @@ export function UserCard({
           )}
 
           {/* Solicitações que EU enviei - apenas botão de cancelar */}
-          {showFriendshipButton && user.friendshipStatus === 'PENDING' && !isRecipient && (
-            <Box sx={{ width: '100%', mt: 'auto' }}>
-              <Button
-                variant="outlined"
-                color="error"
-                fullWidth
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleRejectFriend(e)
-                }}
-              >
-                Cancelar solicitação
-              </Button>
-            </Box>
-          )}
+          
 
           {/* Solicitações que EU recebi - botões de aceitar/recusar */}
           {showFriendshipActions && user.friendshipStatus === 'PENDING' && isRecipient && (
