@@ -158,6 +158,13 @@ export const userApi = {
     const response = await api.get('/api/users/header-info')
     return response.data
   },
+
+  listFriends: () => api.get('/friendships/friends'),
+  listPendingRequests: () => api.get('/friendships/requests'),
+  acceptFriendRequest: (requesterId: string) => api.post(`/friendships/accept/${requesterId}`),
+  rejectFriendRequest: (friendshipId: string) => api.delete(`/friendships/${friendshipId}`),
+  sendFriendRequest: (recipientId: string) => api.post('/friendships/request', { recipientId }),
+  listSuggestions: () => api.get('/friendships/suggestions')
 }
 
 export const linkApi = {
