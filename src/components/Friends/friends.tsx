@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Box, Tabs, Tab } from '@mui/material'
 import { UserCard } from '@/components/user-card'
 import { ContainerCards } from '@/components/ContainerCard/container-cards'
@@ -54,6 +54,7 @@ interface FriendsProps {
 export function Friends({ initialTab = 0 }: FriendsProps) {
   const [friends, setFriends] = useState<Friend[]>([])
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([])
+  const [receivedRequests, setReceivedRequests] = useState<PendingRequest[]>([])
   const [suggestions, setSuggestions] = useState<UserWithFriendship[]>([])
   const [tabValue, setTabValue] = useState(initialTab)
   const { isLoading, setIsLoading } = useLoading()
@@ -72,7 +73,25 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
       const response = await userApi.listPendingRequests()
       setPendingRequests(response.data.data)
     } catch (error) {
-      console.error('Erro ao carregar solicitações:', error)
+      console.error('Erro ao carregar solicitações enviadas:', error)
+    }
+  }, [])
+
+  const fetchReceivedRequests = useCallback(async () => {
+    try {
+      const response = await userApi.listReceivedRequests()
+      setReceivedRequests(response.data.data)
+    } catch (error) {
+      console.error('Erro ao carregar solicitações recebidas:', error)
+    }
+  }, [])
+
+  const fetchSuggestions = useCallback(async () => {
+    try {
+      const response = await userApi.listSuggestions()
+      setSuggestions(response.data.data)
+    } catch (error) {
+      console.error('Erro ao carregar sugestões:', error)
     }
   }, [])
 
@@ -89,31 +108,32 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
       // Atualiza as listas
       await Promise.all([
         fetchFriends(),
-        fetchPendingRequests()
+        fetchPendingRequests(),
+        fetchReceivedRequests(),
+        fetchSuggestions()
       ])
     } catch (error) {
       console.error('Erro na ação de amizade:', error)
       toast.error('Erro ao processar solicitação')
     }
-  }, [fetchFriends, fetchPendingRequests])
+  }, [fetchFriends, fetchPendingRequests, fetchReceivedRequests, fetchSuggestions])
 
-  const handleTabChange = useCallback(async (_event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = useCallback(async (_event: React.SyntheticEvent | null, newValue: number) => {
     setTabValue(newValue)
     setIsLoading(true)
-
     try {
       switch (newValue) {
-        case 0: // Amigos
-          const friendsResponse = await userApi.listFriends()
-          setFriends(friendsResponse.data.data)
+        case 0:
+          await fetchFriends()
           break
-        case 1: // Solicitações
-          const requestsResponse = await userApi.listPendingRequests()
-          setPendingRequests(requestsResponse.data.data)
+        case 1:
+          await fetchPendingRequests()
           break
-        case 2: // Sugestões
-          const suggestionsResponse = await userApi.listSuggestions()
-          setSuggestions(suggestionsResponse.data.data)
+        case 2:
+          await fetchReceivedRequests()
+          break
+        case 3:
+          await fetchSuggestions()
           break
       }
     } catch (error) {
@@ -121,11 +141,14 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
     } finally {
       setIsLoading(false)
     }
-  }, [setIsLoading])
+  }, [fetchFriends, fetchPendingRequests, fetchReceivedRequests, fetchSuggestions, setIsLoading])
 
-  const renderContent = () => {
+  useEffect(() => {
+    handleTabChange(null, tabValue)
+  }, [handleTabChange, tabValue])
+
+  const getCurrentContent = () => {
     let content: UserWithFriendship[] = []
-    let emptyMessage = ''
 
     switch (tabValue) {
       case 0:
@@ -140,7 +163,6 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
           friendshipId: friend.friendshipId,
           plan: { type: 'FREE' }
         }))
-        emptyMessage = 'Você ainda não tem amigos'
         break
       case 1:
         content = pendingRequests.map(request => ({
@@ -154,34 +176,47 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
           friendshipId: request.id,
           plan: { type: 'FREE' }
         }))
+        break
+      case 2:
+        content = receivedRequests.map(request => ({
+          _id: request.user._id,
+          username: request.user.username,
+          bio: request.user.bio,
+          avatar: request.user.avatar,
+          followers: request.user.followers,
+          following: request.user.following,
+          friendshipStatus: 'FRIENDLY',
+          friendshipId: request.id,
+          plan: { type: 'FREE' }
+        }))
+        break
+      case 3:
+        content = suggestions.filter(Boolean) as UserWithFriendship[]
+        break
+    }
+
+    return content
+  }
+
+  const getEmptyMessage = () => {
+    let emptyMessage = ''
+
+    switch (tabValue) {
+      case 0:
+        emptyMessage = 'Você ainda não tem amigos'
+        break
+      case 1:
         emptyMessage = 'Nenhuma solicitação pendente'
         break
       case 2:
-        content = suggestions.filter(Boolean) as UserWithFriendship[]
+        emptyMessage = 'Nenhuma solicitação recebida'
+        break
+      case 3:
         emptyMessage = 'Nenhuma sugestão disponível'
         break
     }
 
-    return (
-      <ContainerCards
-        key={tabValue}
-        isEmpty={!isLoading && content.length === 0}
-        emptyMessage={emptyMessage}
-        isLoading={isLoading}
-      >
-        {content.map((user) => (
-          user && user._id ? (
-            <UserCard 
-              key={user._id}
-              user={user}
-              showFriendshipActions={tabValue === 1}
-              showFriendshipButton={true}
-              onFriendshipAction={handleFriendshipAction}
-            />
-          ) : null
-        ))}
-      </ContainerCards>
-    )
+    return emptyMessage
   }
 
   return (
@@ -193,11 +228,26 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
         sx={{ mb: 4 }}
       >
         <Tab label="Amigos" />
-        <Tab label="Solicitações" />
+        <Tab label="Solicitações Enviadas" />
+        <Tab label="Solicitações Recebidas" />
         <Tab label="Sugestões" />
       </Tabs>
 
-      {renderContent()}
+      <ContainerCards
+        isEmpty={!isLoading && getCurrentContent().length === 0}
+        emptyMessage={getEmptyMessage()}
+        isLoading={isLoading}
+      >
+        {getCurrentContent().map((user) => (
+          <UserCard
+            key={user._id}
+            user={user}
+            showFriendshipActions={tabValue === 2}
+            showFriendshipButton={true}
+            onFriendshipAction={handleFriendshipAction}
+          />
+        ))}
+      </ContainerCards>
     </Box>
   )
 } 

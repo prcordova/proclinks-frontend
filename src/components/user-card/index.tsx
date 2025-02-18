@@ -18,19 +18,20 @@ interface User {
   }
   friendshipStatus?: 'NONE' | 'PENDING' | 'FRIENDLY'
   friendshipId?: string
+  friendshipInitiator?: 'ME' | 'THEM'
 }
 
 interface UserCardProps {
   user: User
-  showFriendshipActions?: boolean
   showFriendshipButton?: boolean
+  showFriendshipActions?: boolean
   onFriendshipAction?: (userId: string, action: 'accept' | 'reject', friendshipId?: string) => Promise<void>
 }
 
 export function UserCard({ 
   user, 
-  showFriendshipActions,
   showFriendshipButton = true,
+  showFriendshipActions = false,
   onFriendshipAction
 }: UserCardProps) {
   const router = useRouter()
@@ -39,7 +40,7 @@ export function UserCard({
     return null
   }
 
-  const handleCardClick = (e: React.MouseEvent) => {
+  const handleCardClick = () => {
     router.push(`/user/${user.username}`)
   }
 
@@ -143,7 +144,25 @@ export function UserCard({
             </Box>
           )}
 
-          {showFriendshipActions && user.friendshipStatus === 'PENDING' && (
+          {/* Solicitações que EU enviei - apenas botão de cancelar */}
+          {showFriendshipButton && user.friendshipStatus === 'PENDING' && user.friendshipInitiator === 'ME' && (
+            <Box sx={{ width: '100%', mt: 'auto' }}>
+              <Button
+                variant="outlined"
+                color="error"
+                fullWidth
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleRejectFriend(e)
+                }}
+              >
+                Cancelar solicitação
+              </Button>
+            </Box>
+          )}
+
+          {/* Solicitações que EU recebi - botões de aceitar/recusar */}
+          {showFriendshipActions && user.friendshipStatus === 'PENDING' && user.friendshipInitiator === 'THEM' && (
             <Box sx={{ 
               display: 'flex', 
               gap: 1, 
