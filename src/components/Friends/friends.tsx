@@ -14,6 +14,8 @@ interface Friend {
   avatar?: string;
   friendshipId: string;
   since: string;
+  followers?: string[];
+  following?: string[];
 }
 
 interface User {
@@ -159,8 +161,8 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
           username: friend.username,
           bio: friend.bio,
           avatar: friend.avatar,
-          followers: 0,
-          following: 0,
+          followers: friend.followers?.length || 0,
+          following: friend.following?.length || 0,
           friendshipStatus: 'FRIENDLY' as const,
           friendshipId: friend.friendshipId,
           plan: { type: 'FREE' as const }
