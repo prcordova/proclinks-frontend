@@ -13,7 +13,7 @@ export function FollowButton({ text, isLoading, onClick }: FollowButtonProps) {
     <Button
       onClick={onClick}
       disabled={isLoading}
-      variant={text === 'Deixar de Seguir' ? 'outline' : 'default'}
+      variant={text === 'seguindo' ? 'outline' : 'default'}
       size="sm"
     >
       {isLoading ? 'Carregando...' : text}

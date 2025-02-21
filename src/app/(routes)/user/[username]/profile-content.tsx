@@ -66,7 +66,7 @@ interface UserProfile {
 
 const BUTTON_TEXT = {
   FOLLOW: 'Seguir',
-  UNFOLLOW: 'Deixar de Seguir',
+  UNFOLLOW: 'Seguindo',
   LOADING: 'Carregando...'
 } as const
 
