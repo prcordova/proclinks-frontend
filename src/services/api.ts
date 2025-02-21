@@ -159,16 +159,23 @@ export const userApi = {
     return response.data
   },
 
-  listFriends: () => api.get('/api/friendships/friends'),
-  listPendingRequests: () => api.get('/api/friendships/requests/sent'),
-  acceptFriendRequest: (requestId: string) => 
-    api.post(`/api/friendships/requests/${requestId}/accept`),
-  rejectFriendRequest: (requestId: string) => 
-    api.post(`/api/friendships/requests/${requestId}/reject`),
-  sendFriendRequest: (data: { recipientId: string }) => api.post('/api/friendships/requests', data),
-  listSuggestions: () => api.get('/api/friendships/suggestions'),
-  listReceivedRequests: () => api.get('/api/friendships/requests/received'),
-  unfriend: (friendshipId: string) => api.post(`/api/friendships/${friendshipId}/unfriend`),
+   checkFriendStatus: (userId: string) => 
+    api.get(`/api/friendships/status/${userId}`),
+  friendships: {
+    list: () => api.get('/api/friendships/friends'),
+    pending: () => api.get('/api/friendships/requests/sent'),
+    received: () => api.get('/api/friendships/requests/received'),
+    send: (recipientId: string) => 
+      api.post('/api/friendships/requests', { recipientId }),
+    accept: (requestId: string) => 
+      api.post(`/api/friendships/requests/${requestId}/accept`),
+    reject: (requestId: string) => 
+      api.post(`/api/friendships/requests/${requestId}/reject`),
+    unfriend: (friendshipId: string) => 
+      api.post(`/api/friendships/${friendshipId}/unfriend`),
+    checkStatus: (userId: string) =>
+      api.get(`/api/friendships/status/${userId}`)
+  }
 }
 
 export const linkApi = {

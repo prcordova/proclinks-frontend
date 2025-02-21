@@ -1,9 +1,12 @@
 import { Avatar, Card, CardContent,  Button, Box, Typography } from '@mui/material'
- import { getImageUrl } from '@/utils/url'
+import { getImageUrl } from '@/utils/url'
 import { getPlanStyle } from '@/utils/planStyles'
- import { FriendshipButton } from '../FriendshipButton/friendship-button'
+import { FriendshipButton } from '../FriendshipButton/friendship-button'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
+import { useState, useEffect } from 'react'
+import { userApi } from '@/services/api'
+import { toast } from 'react-hot-toast'
 
 interface User {
   _id: string
@@ -37,6 +40,20 @@ export function UserCard({
 }: UserCardProps) {
   const router = useRouter()
   const { user: currentUser } = useAuth()
+  const [friendshipStatus, setFriendshipStatus] = useState(user.friendshipStatus || 'NONE')
+  const [friendshipId, setFriendshipId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    if (user._id) {
+      userApi.friendships.checkStatus(user._id)
+        .then(response => {
+          setFriendshipStatus(response.data.data.status)
+          setFriendshipId(response.data.data.friendshipId)
+        })
+        .catch(console.error)
+    }
+  }, [user._id])
 
   if (!user || !user.username) {
     return null
@@ -46,18 +63,44 @@ export function UserCard({
     router.push(`/user/${user.username}`)
   }
 
-  const handleAcceptFriend = (e: React.MouseEvent) => {
-    e.preventDefault()
-    if (onFriendshipAction && user._id) {
-      onFriendshipAction(user._id, 'accept', user.friendshipId)
-    }
-  }
+  const handleFriendshipAction = async () => {
+    if (isLoading) return
+    setIsLoading(true)
 
-  const handleRejectFriend = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (onFriendshipAction) {
-      await onFriendshipAction(user._id, 'reject', user.friendshipId)
+    try {
+      if (onFriendshipAction) {
+        await onFriendshipAction(user._id, 'accept', friendshipId || undefined)
+        return
+      }
+
+      switch (friendshipStatus) {
+        case 'NONE':
+          await userApi.friendships.send(user._id)
+          setFriendshipStatus('PENDING')
+          toast.success('Solicitação de amizade enviada!')
+          break
+
+        case 'PENDING':
+          if (friendshipId) {
+            await userApi.friendships.reject(friendshipId)
+            setFriendshipStatus('NONE')
+            toast.success('Solicitação de amizade cancelada!')
+          }
+          break
+
+        case 'FRIENDLY':
+          if (friendshipId) {
+            await userApi.friendships.unfriend(friendshipId)
+            setFriendshipStatus('NONE')
+            toast.success('Amizade removida!')
+          }
+          break
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao processar solicitação'
+      toast.error(errorMessage)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -141,18 +184,16 @@ export function UserCard({
             </Box>
           </Box>
           
-          {showFriendshipButton && user.friendshipStatus && (
+          {showFriendshipButton && currentUser?.id !== user._id && (
             <Box sx={{ width: '100%', mt: 'auto' }}>
               <FriendshipButton
-                userId={user._id}
-                initialStatus={user.friendshipStatus}
+                status={friendshipStatus}
+                onClick={handleFriendshipAction}
                 size="small"
+                disabled={isLoading}
               />
             </Box>
           )}
-
-          {/* Solicitações que EU enviei - apenas botão de cancelar */}
-          
 
           {/* Solicitações que EU recebi - botões de aceitar/recusar */}
           {showFriendshipActions && user.friendshipStatus === 'PENDING' && isRecipient && (
@@ -168,7 +209,7 @@ export function UserCard({
                 fullWidth
                 onClick={(e) => {
                   e.stopPropagation()
-                  handleAcceptFriend(e)
+                  handleFriendshipAction()
                 }}
               >
                 Aceitar
@@ -179,7 +220,7 @@ export function UserCard({
                 fullWidth
                 onClick={(e) => {
                   e.stopPropagation()
-                  handleRejectFriend(e)
+                  handleFriendshipAction()
                 }}
               >
                 Recusar

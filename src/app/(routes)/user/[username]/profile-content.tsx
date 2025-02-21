@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation'
 import EditIcon from '@mui/icons-material/Edit'
 import { CustomLink } from '@/components/custom-link'
 import { useLoading } from '@/contexts/loading-context'
-
+import { FriendshipButton } from '@/components/FriendshipButton/friendship-button'
 
 interface UserLink {
   _id: string
@@ -73,35 +73,37 @@ const BUTTON_TEXT = {
 export function ProfileContent({ username }: { username: string }) {
   const { user: currentUser } = useAuth()
   const router = useRouter()
-   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [links, setLinks] = useState<UserLink[]>([])
-   const [isFollowing, setIsFollowing] = useState(false)
+  const [isFollowing, setIsFollowing] = useState(false)
   const { setIsLoading , isLoading } = useLoading()
+  const [friendshipStatus, setFriendshipStatus] = useState<'NONE' | 'PENDING' | 'FRIENDLY'>('NONE')
+  const [friendshipId, setFriendshipId] = useState<string | null>(null)
 
   const loadProfile = useCallback(async () => {
     setIsLoading(true)
     try {
-   
       const profileData = await userApi.getPublicProfile(username)
-      
       setProfile({
         ...profileData.data,
         userId: profileData.data.id
       })
       
-      const isUserFollowing = Array.isArray(profileData.data.followersIds) && 
-        profileData.data.followersIds.includes(currentUser?.id)
+      // Carregar status de amizade
+      if (currentUser?.id) {
+        const friendshipData = await userApi.friendships.checkStatus(profileData.data.id)
+        setFriendshipStatus(friendshipData.data.data.status)
+        setFriendshipId(friendshipData.data.data.friendshipId)
+      }
       
-      setIsFollowing(isUserFollowing)
+      setIsFollowing(Array.isArray(profileData.data.followersIds) && 
+        profileData.data.followersIds.includes(currentUser?.id))
       setLinks(profileData.data.links || [])
-      setIsLoading(false)
     } catch (error) {
-      setIsLoading(false)
       console.error('Erro ao carregar dados:', error)
     } finally {
-     setIsLoading(false)
+      setIsLoading(false)
     }
-
   }, [username, currentUser?.id, setIsLoading])
 
   useEffect(() => {
@@ -136,7 +138,43 @@ export function ProfileContent({ username }: { username: string }) {
       setIsLoading(false)
     }
   }
- 
+
+  const handleFriendshipAction = async () => {
+    if (isLoading || !profile?.id) return
+    setIsLoading(true)
+
+    try {
+      switch (friendshipStatus) {
+        case 'NONE':
+          await userApi.friendships.send(profile.id)
+          setFriendshipStatus('PENDING')
+          toast.success('Solicitação de amizade enviada!')
+          break
+
+        case 'PENDING':
+          if (friendshipId) {
+            await userApi.friendships.reject(friendshipId)
+            setFriendshipStatus('NONE')
+            toast.success('Solicitação de amizade cancelada!')
+          }
+          break
+
+        case 'FRIENDLY':
+          if (friendshipId) {
+            await userApi.friendships.unfriend(friendshipId)
+            setFriendshipStatus('NONE')
+            toast.success('Amizade removida!')
+          }
+          break
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao processar solicitação'
+      toast.error(errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   if (!profile) {
     return <Typography>Perfil não encontrado</Typography>
   }
@@ -263,13 +301,20 @@ export function ProfileContent({ username }: { username: string }) {
              </Typography>
           </Box>
 
-          {/* Botão de Seguir - Não mostrar para o próprio perfil */}
+          {/* Botão de Follow */}
           {profile && currentUser && currentUser?.username !== username && (
-            <FollowButton 
-              text={isFollowing ? BUTTON_TEXT.UNFOLLOW : BUTTON_TEXT.FOLLOW}
-              isLoading={isLoading}
-              onClick={handleFollowClick}
-            />
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <FollowButton 
+                text={isFollowing ? BUTTON_TEXT.UNFOLLOW : BUTTON_TEXT.FOLLOW}
+                isLoading={isLoading}
+                onClick={handleFollowClick}
+              />
+              <FriendshipButton 
+                status={friendshipStatus}
+                onClick={handleFriendshipAction}
+                disabled={isLoading}
+              />
+            </Box>
           )}
         </Box>
         {/* Links Section */}
