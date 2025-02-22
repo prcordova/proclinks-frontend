@@ -48,6 +48,7 @@ interface PendingRequest {
 
 interface UserWithFriendship extends User {
   friendshipId?: string;
+  isRequester?: boolean;
 }
 
 interface FriendsProps {
@@ -155,34 +156,30 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
     }
   }
 
-  const handleTabChange = useCallback(async (_event: React.SyntheticEvent | null, newValue: number) => {
-    setTabValue(newValue)
-    setIsLoading(true)
+  const loadAllData = useCallback(async () => {
     try {
-      switch (newValue) {
-        case 0:
-          await fetchFriends()
-          break
-        case 1:
-          await fetchPendingRequests()
-          break
-        case 2:
-          await fetchReceivedRequests()
-          break
-        case 3:
-          await fetchSuggestions()
-          break
-      }
+      setIsLoading(true)
+      await Promise.all([
+        fetchFriends(),
+        fetchPendingRequests(),
+        fetchReceivedRequests(),
+        fetchSuggestions()
+      ])
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
+      toast.error('Erro ao carregar dados')
     } finally {
       setIsLoading(false)
     }
-  }, [fetchFriends, fetchPendingRequests, fetchReceivedRequests, fetchSuggestions, setIsLoading])
+  }, [fetchFriends, fetchPendingRequests, fetchReceivedRequests, fetchSuggestions])
 
   useEffect(() => {
-    handleTabChange(null, tabValue)
-  }, [handleTabChange, tabValue])
+    loadAllData()
+  }, [loadAllData])
+
+  const handleTabChange = (_event: React.SyntheticEvent | null, newValue: number) => {
+    setTabValue(newValue)
+  }
 
   const getCurrentContent = () => {
     switch (tabValue) {
@@ -196,9 +193,10 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
           following: friend.following?.length || 0,
           friendshipStatus: 'FRIENDLY' as const,
           friendshipId: friend.friendshipId,
-          plan: { type: 'FREE' as const }
+          plan: { type: 'FREE' as const },
+          isRequester: false
         }))
-      case 1: // Solicitações Enviadas por mim
+      case 1: // Solicitações Enviadas
         return pendingRequests.map(request => ({
           _id: request.user._id,
           username: request.user.username,
@@ -208,10 +206,10 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
           following: request.user.following,
           friendshipStatus: 'PENDING' as const,
           friendshipId: request.id,
-          isRequester: true, // Eu sou o solicitante
+          isRequester: true, // Indica que o usuário atual é o solicitante
           plan: { type: 'FREE' as const }
         }))
-      case 2: // Solicitações Recebidas por mim
+      case 2: // Solicitações Recebidas
         return receivedRequests.map(request => ({
           _id: request.user._id,
           username: request.user.username,
@@ -221,7 +219,7 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
           following: request.user.following,
           friendshipStatus: 'PENDING' as const,
           friendshipId: request.id,
-          isRequester: false, // Eu sou o destinatário
+          isRequester: false, // Indica que o usuário atual é o destinatário
           plan: { type: 'FREE' as const }
         }))
       case 3: // Sugestões
@@ -273,11 +271,11 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
       >
         {getCurrentContent().map((user) => (
           <UserCard
-          
             key={user._id}
             user={user}
-            showFriendshipActions={tabValue === 2}
+            showFriendshipActions={tabValue === 2 && !user.isRequester}
             showFriendshipButton={true}
+            isRequester={user.isRequester}
             onFriendshipAction={handleFriendshipAction}
           />
         ))}
