@@ -1,6 +1,6 @@
 'use client'
 
-import { useState  } from 'react'
+import {  useState, useEffect } from 'react'
 import { 
   AppBar, Toolbar, Typography, Button, IconButton, Box,
    Menu, MenuItem, 
@@ -10,16 +10,34 @@ import { useThemeContext } from '@/contexts/theme-context'
 import { useAuth } from '@/contexts/auth-context'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 import LightModeIcon from '@mui/icons-material/LightMode'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
- import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined'
+ import { useRouter } from 'next/navigation'
+import { usePathname } from 'next/dist/client/components/navigation'
+import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined'
 import { CustomAvatar } from '@/components/avatar'
+import { useLoading } from '@/contexts/loading-context'
 
 export function Header() {
+  const { setIsLoading } = useLoading()
   const { mode, setMode } = useThemeContext()
   const { user, logout } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+
+  useEffect(() => {
+    setIsLoading(false)
+  }, [pathname, setIsLoading])
+
+  const handleNavigation = (path: string) => {
+    if (path === pathname) {
+      handleClose()
+      return
+    }
+
+    setIsLoading(true)
+    handleClose()
+    router.push(path)
+  }
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
@@ -47,17 +65,23 @@ export function Header() {
             justifyContent: 'space-between'
           }}
         >
-          <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <Box 
+            onClick={() => handleNavigation('/')} 
+            sx={{ 
+              cursor: 'pointer', 
+              textDecoration: 'none', 
+              color: 'inherit' 
+            }}
+          >
             <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main' }}>
               Melter
             </Typography>
-          </Link>
+          </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Tooltip title="Explorar Perfis">
               <IconButton
-                component={Link}
-                href="/explorer"
+                onClick={() => handleNavigation('/explorer')}
                 sx={{ color: 'text.secondary' }}
               >
                 <PeopleAltOutlinedIcon />
@@ -89,36 +113,20 @@ export function Header() {
                   onClose={handleClose}
                 >
                   <MenuItem 
-                    component={Link}
-                    href={`/user/${user.username}`}
-                    onClick={handleClose}
+                    onClick={() => handleNavigation(`/user/${user.username}`)}
                   >
                     Meu Perfil
-
                   </MenuItem>
                   <MenuItem 
-                    component={Link}
-                    href="/profile/edit"
-                    onClick={handleClose}
+                    onClick={() => handleNavigation('/profile/edit')}
                   >
                     Editar Links
                   </MenuItem>
-                  {user.plan?.type === 'FREE' ? (
-                    <MenuItem onClick={() => {
-                      handleClose()
-                      router.push('/plans')
-                    }}>
-                      Fazer Upgrade
-                    </MenuItem>
-                  ) : (
-                    <MenuItem 
-                      component={Link}
-                      href="/plans"
-                      onClick={handleClose}
-                    >
-                      Gerenciar Plano
-                    </MenuItem>
-                  )}
+                  <MenuItem 
+                    onClick={() => handleNavigation('/plans')}
+                  >
+                    {user.plan?.type === 'FREE' ? 'Fazer Upgrade' : 'Gerenciar Plano'}
+                  </MenuItem>
                   <MenuItem onClick={() => {
                     handleClose()
                     logout()
@@ -130,15 +138,13 @@ export function Header() {
             ) : (
               <>
                 <Button 
-                  component={Link}
-                  href="/login"
+                  onClick={() => handleNavigation('/login')}
                   color="inherit"
                 >
                   Login
                 </Button>
                 <Button 
-                  component={Link}
-                  href="/register"
+                  onClick={() => handleNavigation('/register')}
                   variant="contained"
                   sx={{ borderRadius: 2 }}
                 >
