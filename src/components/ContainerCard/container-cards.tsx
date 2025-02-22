@@ -1,6 +1,6 @@
 'use client'
 
-import { Box,   Skeleton } from '@mui/material'
+import { Box, Skeleton } from '@mui/material'
 
 interface ContainerCardsProps {
   children: React.ReactNode
@@ -11,8 +11,8 @@ interface ContainerCardsProps {
 }
 
 const UserCardSkeleton = () => (
-  <Box sx={{ width: '100%', maxWidth: 340, px: 1 }}>
-    <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2, mb: 1 }} />
+  <Box sx={{ width: '100%', maxWidth: 290, px: 1 }}>
+    <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2, mb: 1 }} />
   </Box>
 )
 
@@ -21,34 +21,63 @@ export function ContainerCards({
   emptyMessage = "Nenhum item encontrado",
   isEmpty = false,
   isLoading = false,
-  className
+ 
 }: ContainerCardsProps) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 place-items-center max-w-[1600px] mx-auto">
-        {Array.from(new Array(6)).map((_, index) => (
+      <Box sx={{
+        display: 'grid',
+        gridTemplateColumns: {
+          xs: '1fr',
+          sm: 'repeat(2, 1fr)',
+          md: 'repeat(3, 1fr)',
+          lg: 'repeat(4, 1fr)',
+        },
+        gap: 4,
+        justifyItems: 'center',
+        maxWidth: 1600,
+        mx: 'auto',
+        p: 2
+      }}>
+        {Array.from(new Array(8)).map((_, index) => (
           <UserCardSkeleton key={index} />
         ))}
-      </div>
+      </Box>
     )
   }
 
   return (
-    <div className={`
-      grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 
-      gap-4
-      place-items-center
-      max-w-[1600px] mx-auto
-      [&>*]:w-full [&>*]:max-w-[360px] [&>*]:h-[520px]
-      ${className || ''}
-    `}>
+    <Box sx={{
+      display: 'grid',
+      gridTemplateColumns: {
+        xs: '1fr',
+        sm: 'repeat(2, 1fr)',
+        md: 'repeat(3, 1fr)',
+        lg: 'repeat(4, 1fr)',
+      },
+      gap: 4,
+      justifyItems: 'center',
+      alignItems: 'start',
+      maxWidth: 1600,
+      mx: 'auto',
+      p: 2,
+      '& > *': {
+        width: '100%',
+        maxWidth: 290,
+        minHeight: 400,
+      }
+    }}>
       {isEmpty ? (
-        <p className="text-center text-muted-foreground col-span-full">
+        <Box sx={{ 
+          gridColumn: '1/-1', 
+          textAlign: 'center',
+          color: 'text.secondary'
+        }}>
           {emptyMessage}
-        </p>
+        </Box>
       ) : (
         children
       )}
-    </div>
+    </Box>
   )
 } 

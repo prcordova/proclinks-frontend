@@ -166,6 +166,7 @@ export function UserCard({
             justifyContent: 'center', 
             gap: 4
           }}>
+           
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="body2" color="text.secondary">
                 Seguidores

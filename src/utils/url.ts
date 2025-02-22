@@ -1,5 +1,5 @@
-export const getImageUrl = (path: string | null) => {
-  if (!path) return null;
+export const getImageUrl = (path?: string): string | undefined => {
+  if (!path) return undefined;
   
   // Se a URL já começa com https://, é uma URL do S3
   if (path.startsWith('https://')) {
