@@ -6,6 +6,9 @@ import { ContainerCards } from '@/components/ContainerCard/container-cards'
 import { UserCard } from '@/components/user-card'
 import { useLoading } from '@/contexts/loading-context'
 import { FilterOption } from '@/components/FilterOptions/filter-options'
+import toast from 'react-hot-toast'
+import { useRouter } from 'next/navigation'
+import { AxiosError } from 'axios'
 
 interface User {
   _id: string
@@ -28,7 +31,7 @@ interface UsersListProps {
 export function UsersList({ searchQuery, selectedFilter }: UsersListProps) {
   const [users, setUsers] = useState<User[]>([])
   const { setIsLoading, isLoading } = useLoading()
-
+  const router = useRouter()
   const fetchUsers = useCallback(async () => {
     try {
       setIsLoading(true)
@@ -43,8 +46,17 @@ export function UsersList({ searchQuery, selectedFilter }: UsersListProps) {
         ? response.data.data.searchResults 
         : response.data.data.featuredUsers
 
+     
       setUsers(users || [])
     } catch (error) {
+      if(error instanceof AxiosError) {
+        if(error.response?.status === 401) {
+          toast.error('Erro ao buscar usuários')
+          router.push('/login')
+        }
+      }
+      
+      toast.error('Erro ao buscar usuários')
       console.error('Erro ao buscar usuários:', error)
       setUsers([])
     } finally {
@@ -56,6 +68,8 @@ export function UsersList({ searchQuery, selectedFilter }: UsersListProps) {
     const timer = setTimeout(() => {
       fetchUsers()
     }, searchQuery ? 500 : 0)
+
+    
 
     return () => clearTimeout(timer)
   }, [fetchUsers, searchQuery])
