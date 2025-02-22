@@ -29,13 +29,15 @@ interface UserCardProps {
   user: User
   showFriendshipButton?: boolean
   showFriendshipActions?: boolean
-  onFriendshipAction?: (userId: string, action: 'accept' | 'reject', friendshipId?: string) => Promise<void>
+  isRequester?: boolean
+  onFriendshipAction?: (action: 'accept' | 'reject' | 'cancel', friendshipId?: string) => Promise<void>
 }
 
 export function UserCard({ 
   user, 
   showFriendshipButton = true,
   showFriendshipActions = false,
+  isRequester = false,
   onFriendshipAction
 }: UserCardProps) {
   const router = useRouter()
@@ -69,7 +71,7 @@ export function UserCard({
 
     try {
       if (onFriendshipAction) {
-        await onFriendshipAction(user._id, 'accept', friendshipId || undefined)
+        await onFriendshipAction('accept', friendshipId || undefined)
         return
       }
 
@@ -103,8 +105,6 @@ export function UserCard({
       setIsLoading(false)
     }
   }
-
-  const isRecipient = currentUser?.id === user.recipient
 
   return (
     <Card sx={{ 
@@ -196,35 +196,46 @@ export function UserCard({
           )}
 
           {/* Solicitações que EU recebi - botões de aceitar/recusar */}
-          {showFriendshipActions && user.friendshipStatus === 'PENDING' && isRecipient && (
-            <Box sx={{ 
-              display: 'flex', 
-              gap: 1, 
-              width: '100%',
-              mt: 'auto'
-            }}>
-              <Button
-                variant="contained"
-                color="primary"
-                fullWidth
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleFriendshipAction()
-                }}
-              >
-                Aceitar
-              </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                fullWidth
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleFriendshipAction()
-                }}
-              >
-                Recusar
-              </Button>
+          {showFriendshipActions && user.friendshipStatus === 'PENDING' && (
+            <Box sx={{ display: 'flex', gap: 1, width: '100%', mt: 'auto' }}>
+              {isRequester ? (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  fullWidth
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onFriendshipAction?.('cancel', user.friendshipId)
+                  }}
+                >
+                  Cancelar solicitação
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onFriendshipAction?.('accept', user.friendshipId)
+                    }}
+                  >
+                    Aceitar
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    fullWidth
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onFriendshipAction?.('reject', user.friendshipId)
+                    }}
+                  >
+                    Recusar
+                  </Button>
+                </>
+              )}
             </Box>
           )}
         </Box>

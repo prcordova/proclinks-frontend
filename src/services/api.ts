@@ -174,7 +174,8 @@ export const userApi = {
     unfriend: (friendshipId: string) => 
       api.post(`/api/friendships/${friendshipId}/unfriend`),
     checkStatus: (userId: string) =>
-      api.get(`/api/friendships/status/${userId}`)
+      api.get(`/api/friendships/status/${userId}`),
+    suggestions: () => api.get('/api/friendships/suggestions')
   }
 }
 

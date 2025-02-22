@@ -6,7 +6,8 @@ import { UserCard } from '@/components/user-card'
 import { ContainerCards } from '@/components/ContainerCard/container-cards'
 import { useLoading } from '@/contexts/loading-context'
 import { userApi } from '@/services/api'
- 
+import { toast } from 'react-hot-toast'
+
 interface Friend {
   id: string;
   username: string;
@@ -53,6 +54,17 @@ interface FriendsProps {
   initialTab?: number
 }
 
+interface FriendResponse {
+  _id: string
+  username: string
+  bio: string
+  avatar?: string
+  friendshipId: string
+  createdAt: string
+  followers: string[]
+  following: string[]
+}
+
 export function Friends({ initialTab = 0 }: FriendsProps) {
   const [friends, setFriends] = useState<Friend[]>([])
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([])
@@ -63,62 +75,81 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
 
   const fetchFriends = useCallback(async () => {
     try {
-      const response = await userApi.listFriends()
-      setFriends(response.data.data)
+      setIsLoading(true)
+      const response = await userApi.friendships.list()
+      setFriends(response.data.data.map((friend: FriendResponse) => ({
+        id: friend._id,
+        username: friend.username,
+        bio: friend.bio || '',
+        avatar: friend.avatar,
+        friendshipId: friend.friendshipId,
+        since: friend.createdAt,
+        followers: friend.followers,
+        following: friend.following
+      })))
     } catch (error) {
       console.error('Erro ao carregar amigos:', error)
+      toast.error('Erro ao carregar amigos')
+    } finally {
+      setIsLoading(false)
     }
-  }, [])
+  }, [setIsLoading])
 
   const fetchPendingRequests = useCallback(async () => {
     try {
-      const response = await userApi.listPendingRequests()
+      setIsLoading(true)
+      const response = await userApi.friendships.pending()
       setPendingRequests(response.data.data)
     } catch (error) {
       console.error('Erro ao carregar solicitações enviadas:', error)
+      toast.error('Erro ao carregar solicitações enviadas')
+    } finally {
+      setIsLoading(false)
     }
-  }, [])
+  }, [setIsLoading])
 
   const fetchReceivedRequests = useCallback(async () => {
     try {
-      const response = await userApi.listReceivedRequests()
+      setIsLoading(true)
+      const response = await userApi.friendships.received()
       setReceivedRequests(response.data.data)
     } catch (error) {
       console.error('Erro ao carregar solicitações recebidas:', error)
+      toast.error('Erro ao carregar solicitações recebidas')
+    } finally {
+      setIsLoading(false)
     }
-  }, [])
+  }, [setIsLoading])
 
   const fetchSuggestions = useCallback(async () => {
     try {
-      const response = await userApi.listSuggestions()
+      const response = await userApi.friendships.suggestions()
       setSuggestions(response.data.data)
     } catch (error) {
       console.error('Erro ao carregar sugestões:', error)
     }
   }, [])
 
-  const handleFriendshipAction = async (userId: string, action: 'accept' | 'reject', friendshipId?: string) => {
+  const handleFriendshipAction = async (
+    action: 'accept' | 'reject' | 'cancel', 
+    friendshipId?: string
+  ) => {
+    if (!friendshipId) return
+    
     try {
       setIsLoading(true)
-      
-      if (action === 'accept' && friendshipId) {
-        await userApi.acceptFriendRequest(friendshipId)
-        
-        // Remove a solicitação aceita da lista de recebidas
-        setReceivedRequests(prev => prev.filter(request => request.id !== friendshipId))
-        
-        // Atualiza a lista de amigos
-        const friendsResponse = await userApi.listFriends()
-        setFriends(friendsResponse.data.data)
-        
-      } else if (action === 'reject' && friendshipId) {
-        await userApi.rejectFriendRequest(friendshipId)
-        // Remove a solicitação rejeitada da lista
-        setReceivedRequests(prev => prev.filter(request => request.id !== friendshipId))
+      if (action === 'accept') {
+        await userApi.friendships.accept(friendshipId)
+        toast.success('Solicitação aceita com sucesso!')
+        await Promise.all([fetchReceivedRequests(), fetchFriends()])
+      } else {
+        await userApi.friendships.reject(friendshipId)
+        toast.success(action === 'reject' ? 'Solicitação rejeitada' : 'Solicitação cancelada')
+        await fetchReceivedRequests()
       }
-      
     } catch (error) {
-      console.error('Erro ao executar ação de amizade:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao processar solicitação'
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -167,7 +198,7 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
           friendshipId: friend.friendshipId,
           plan: { type: 'FREE' as const }
         }))
-      case 1: // Solicitações Enviadas
+      case 1: // Solicitações Enviadas por mim
         return pendingRequests.map(request => ({
           _id: request.user._id,
           username: request.user.username,
@@ -177,10 +208,10 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
           following: request.user.following,
           friendshipStatus: 'PENDING' as const,
           friendshipId: request.id,
-          friendshipInitiator: 'ME' as const,
+          isRequester: true, // Eu sou o solicitante
           plan: { type: 'FREE' as const }
         }))
-      case 2: // Solicitações Recebidas
+      case 2: // Solicitações Recebidas por mim
         return receivedRequests.map(request => ({
           _id: request.user._id,
           username: request.user.username,
@@ -190,10 +221,10 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
           following: request.user.following,
           friendshipStatus: 'PENDING' as const,
           friendshipId: request.id,
-          friendshipInitiator: 'THEM' as const,
+          isRequester: false, // Eu sou o destinatário
           plan: { type: 'FREE' as const }
         }))
-      case 3:
+      case 3: // Sugestões
         return suggestions
       default:
         return []
@@ -229,9 +260,9 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
         centered
         sx={{ mb: 4 }}
       >
-        <Tab label="Amigos" />
-        <Tab label="Solicitações Enviadas" />
-        <Tab label="Solicitações Recebidas" />
+        <Tab label={`Amigos (${friends.length})`} />
+        <Tab label={`Enviadas (${pendingRequests.length})`} />
+        <Tab label={`Recebidas (${receivedRequests.length})`} />
         <Tab label="Sugestões" />
       </Tabs>
 
@@ -242,6 +273,7 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
       >
         {getCurrentContent().map((user) => (
           <UserCard
+          
             key={user._id}
             user={user}
             showFriendshipActions={tabValue === 2}
