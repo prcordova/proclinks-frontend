@@ -30,6 +30,8 @@ interface User {
   followers: number
   following: number
   friendshipStatus?: 'NONE' | 'PENDING' | 'FRIENDLY'
+  createdAt?: string
+
 }
 
 interface PendingRequest {
@@ -194,7 +196,8 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
           friendshipStatus: 'FRIENDLY' as const,
           friendshipId: friend.friendshipId,
           plan: { type: 'FREE' as const },
-          isRequester: false
+          isRequester: false,
+          createdAt: friend.since
         }))
       case 1: // Solicitações Enviadas
         return pendingRequests.map(request => ({
@@ -207,7 +210,9 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
           friendshipStatus: 'PENDING' as const,
           friendshipId: request.id,
           isRequester: true, // Indica que o usuário atual é o solicitante
-          plan: { type: 'FREE' as const }
+          plan: { type: 'FREE' as const },
+          createdAt: request.createdAt
+           
         }))
       case 2: // Solicitações Recebidas
         return receivedRequests.map(request => ({
@@ -220,7 +225,8 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
           friendshipStatus: 'PENDING' as const,
           friendshipId: request.id,
           isRequester: false, // Indica que o usuário atual é o destinatário
-          plan: { type: 'FREE' as const }
+          plan: { type: 'FREE' as const },
+          createdAt: request.createdAt
         }))
       case 3: // Sugestões
         return suggestions

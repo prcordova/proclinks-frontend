@@ -67,6 +67,7 @@ export default function ExplorerPage() {
             </Box>
           </Box>
           <UsersList 
+          
             searchQuery={searchQuery}
             selectedFilter={selectedFilter}
           />

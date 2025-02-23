@@ -7,6 +7,8 @@ import { useAuth } from '@/contexts/auth-context'
 import { useState, useEffect } from 'react'
 import { userApi } from '@/services/api'
 import { toast } from 'react-hot-toast'
+import { formatDistanceToNow } from 'date-fns/formatDistanceToNow'
+import { ptBR } from 'date-fns/locale'
 
 interface User {
   _id: string
@@ -23,6 +25,7 @@ interface User {
   friendshipId?: string
   friendshipInitiator?: 'ME' | 'THEM'
   recipient?: string
+  createdAt?: string
 }
 
 interface UserCardProps {
@@ -30,6 +33,7 @@ interface UserCardProps {
   showFriendshipButton?: boolean
   showFriendshipActions?: boolean
   isRequester?: boolean
+
   onFriendshipAction?: (action: 'accept' | 'reject' | 'cancel', friendshipId?: string) => Promise<void>
 }
 
@@ -239,7 +243,14 @@ export function UserCard({
               )}
             </Box>
           )}
+          {user.createdAt && (
+          <Typography variant="caption" color="text.secondary">
+            {user.friendshipStatus === 'FRIENDLY' ? 'Amigos desde ' : 'Solicitação enviada '}
+            {formatDistanceToNow(new Date(user.createdAt), { locale: ptBR, addSuffix: true })}
+          </Typography>
+        )}
         </Box>
+        
       </CardContent>
     </Card>
   )
