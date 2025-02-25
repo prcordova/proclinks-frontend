@@ -113,11 +113,12 @@ export function Appearance({
           </PlanLocker>
 
           <PlanLocker
-            requiredPlan="GOLD"
+            requiredPlan="BRONZE"
             currentPlan={user?.plan?.type}
           >
             <ColorPickerField
               label="Cor dos Cards"
+
               value={settings.cardColor}
               onChange={(color) => handleChange('cardColor', color)}
               isMobile={isMobile}
