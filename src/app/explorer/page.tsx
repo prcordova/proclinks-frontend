@@ -74,18 +74,15 @@ export default function ExplorerPage() {
         search: search?.trim()
       })
       
-      console.log('Resposta completa:', response)
-      console.log('Featured Users:', response.data.data.featuredUsers)
-      console.log('Search Results:', response.data.data.searchResults)
-
-      const users = search?.trim() ? response.data.data.searchResults : response.data.data.featuredUsers
-      console.log('Users selecionados:', users)
-      
       setUsers(prev => ({
-        searchResults: search?.trim() ? response.data.data.searchResults : prev.searchResults,
-        featuredUsers: !search?.trim() ? response.data.data.featuredUsers : prev.featuredUsers,
-        page: response.data.data.page,
-        hasMore: response.data.data.hasMore
+        searchResults: search?.trim() 
+          ? response.data.searchResults 
+          : prev.searchResults,
+        featuredUsers: !search?.trim() 
+          ? response.data.featuredUsers 
+          : prev.featuredUsers,
+        page: response.data.page,
+        hasMore: response.data.hasMore
       }))
       setIsLoading(false)
     } catch (error) {
@@ -158,11 +155,11 @@ export default function ExplorerPage() {
       </Box>
 
       <ContainerCards 
-        isEmpty={!isLoading && (!displayedUsers || displayedUsers.length === 0)}
+        isEmpty={!isLoading && displayedUsers.length === 0}
         emptyMessage={`Nenhum usuário ${searchQuery ? 'encontrado' : 'em destaque'}`}
         isLoading={isLoading}
       >
-        {(displayedUsers || []).map((user) => (
+        {displayedUsers.map((user) => (
           <UserCard key={user._id} user={user} />
         ))}
       </ContainerCards>
