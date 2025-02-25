@@ -47,7 +47,7 @@ export default function PlansPage() {
     {
       name: 'BRONZE',
       icon: <StarIcon sx={{ fontSize: 40 }} />,
-      price: 'R$ 4,90',
+      price: 'R$ 2,99',
       color: '#CD7F32',
       features: [
         'Até 5 links',
@@ -59,7 +59,7 @@ export default function PlansPage() {
     {
       name: 'SILVER',
       icon: <PremiumIcon sx={{ fontSize: 40 }} />,
-      price: 'R$ 9,90',
+      price: 'R$ 9,99',
       color: '#C0C0C0',
       features: [
         'Até 10 links',
@@ -73,7 +73,7 @@ export default function PlansPage() {
     {
       name: 'GOLD',
       icon: <DiamondIcon sx={{ fontSize: 40 }} />,
-      price: 'R$ 29,90',
+      price: 'R$ 29,99',
       color: '#FFD700',
       features: [
         'Até 50 links',
