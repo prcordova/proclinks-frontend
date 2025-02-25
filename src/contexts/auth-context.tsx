@@ -87,8 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const response = await userApi.getMyProfile()
         if (response.success) {
-          setUser({
-            id: response.data.id,
+           setUser({
+            id: response.data._id || response.data.id,
             username: response.data.username,
             email: response.data.email,
             avatar: response.data.avatar,
@@ -113,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.success) {
         localStorage.setItem('token', response.data.token)
         setUser({
-          id: response.data.user._id,
+          id: response.data.user._id || response.data.user.id,
           username: response.data.user.username,
           email: response.data.user.email,
           avatar: response.data.user.avatar,
