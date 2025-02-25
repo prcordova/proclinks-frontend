@@ -3,8 +3,14 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { ReactNode } from 'react'
-import { ThemeProvider as MUIThemeProvider, createTheme } from '@mui/material/styles'
+import { ThemeProvider as MUIThemeProvider, Theme, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
+
+declare module '@mui/material/styles' {
+  interface TypeBackground {
+    autofill: string;
+  }
+}
 
 type ThemeMode = 'dark' | 'light'
 
@@ -25,6 +31,28 @@ export const useThemeContext = create<ThemeState>()(
   )
 )
 
+const createAutofillStyles = (theme: Theme) => ({
+  '& .MuiInputBase-input': {
+    '&:-webkit-autofill': {
+      boxShadow: `0 0 0 100px ${theme.palette.mode === 'light' 
+        ? 'rgba(229, 231, 235, 0.4)'
+        : 'rgba(21, 24, 29, 0.678)'
+      } inset !important`,
+      WebkitTextFillColor: `${theme.palette.text.primary} !important`,
+      caretColor: `${theme.palette.text.primary}`,
+      borderRadius: 'inherit',
+      '&::selection': {
+        backgroundColor: `${theme.palette.primary.main}40 !important`,
+        color: `${theme.palette.text.primary} !important`
+      }
+    },
+    '&::selection': {
+      backgroundColor: `${theme.palette.primary.main}40`,
+      color: theme.palette.text.primary
+    }
+  }
+})
+
 const lightTheme = createTheme({
   palette: {
     mode: 'light',
@@ -41,6 +69,13 @@ const lightTheme = createTheme({
       secondary: '#4b5563',
     },
   },
+  components: {
+    MuiTextField: {
+      styleOverrides: {
+        root: ({ theme }) => createAutofillStyles(theme)
+      }
+    }
+  }
 })
 
 const darkTheme = createTheme({
@@ -59,6 +94,13 @@ const darkTheme = createTheme({
       secondary: '#94a3b8',
     },
   },
+  components: {
+    MuiTextField: {
+      styleOverrides: {
+        root: ({ theme }) => createAutofillStyles(theme)
+      }
+    }
+  }
 })
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
