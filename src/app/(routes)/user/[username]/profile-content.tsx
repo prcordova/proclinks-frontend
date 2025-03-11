@@ -176,7 +176,7 @@ export function ProfileContent({ username }: { username: string }) {
   }
 
   if (!profile) {
-    return <Typography>Perfil não encontrado</Typography>
+    return  setIsLoading(true)
   }
 
   return (

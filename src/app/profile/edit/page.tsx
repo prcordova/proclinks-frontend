@@ -29,7 +29,7 @@ import UserInfo from '@/components/userInfo'
 import { SortOptions } from '@/components/sort-options'
 import { AddLinkDialog } from '@/components/add-link-dialog'
 import { PlanLocker } from '@/components/plan-locker'
-  
+
 interface LinkItem {
   id: string
   title: string
@@ -94,10 +94,10 @@ interface ApiLink {
 }
  
 
- 
+
 export default function EditLinksPage() {
   const { user } = useAuth()
-  const [links, setLinks] = useState<LinkItem[]>([])
+   const [links, setLinks] = useState<LinkItem[]>([])
   const [loading, setLoading] = useState(true)
  
   const [hasChanges, setHasChanges] = useState(false)
@@ -187,7 +187,7 @@ export default function EditLinksPage() {
         }
       } catch (error) {
         console.error('Erro ao carregar dados do perfil:', error)
-       } finally {
+      } finally {
         setLoading(false)
       }
     }
@@ -213,7 +213,7 @@ export default function EditLinksPage() {
         
         setLinks(prev => [...prev, newLink])
         setPendingLinks(prev => [...prev, newLink])
-        setOpenNewLinkDialog(false)
+      setOpenNewLinkDialog(false)
         setHasChanges(true)
         
         setAlert({
@@ -446,14 +446,14 @@ export default function EditLinksPage() {
       if (response.success) {
         const formattedLinks = response.data.links
           .sort((a: ApiLink, b: ApiLink) => {
-            switch (mode) {
-              case 'date':
-                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-              case 'name':
-                return a.title.localeCompare(b.title)
-              case 'likes':
-                return (b.likes || 0) - (a.likes || 0)
-              default:
+      switch (mode) {
+        case 'date':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        case 'name':
+          return a.title.localeCompare(b.title)
+        case 'likes':
+          return (b.likes || 0) - (a.likes || 0)
+        default:
                 return a.order - b.order
             }
           })
@@ -623,7 +623,7 @@ export default function EditLinksPage() {
         minHeight: '100vh' 
       }}>
         <CircularProgress />
-      </Box>
+        </Box>
     )
   }
 
@@ -690,7 +690,7 @@ export default function EditLinksPage() {
                 <Typography color="text.secondary">
                   Clique no botão abaixo para adicionar seu primeiro link
                 </Typography>
-              
+                
                     <Button
                       variant="contained"
                       startIcon={<AddIcon />}
@@ -711,8 +711,8 @@ export default function EditLinksPage() {
                       onSort={handleSort}
                       isMobile={isMobile}
                     />
-                  </CardContent>
-                </Card>
+              </CardContent>
+            </Card>
 
                 <Box sx={{ 
                   mb: 4, 
@@ -730,14 +730,14 @@ export default function EditLinksPage() {
                     requiredPlan={nextPlanMap[user?.plan?.type as keyof typeof nextPlanMap]  as 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'}
                     currentPlan={user?.plan?.type}
                   >
-                    <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={() => setOpenNewLinkDialog(true)}
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => setOpenNewLinkDialog(true)}
                       fullWidth={isMobile}
-                    >
-                      Adicionar Link
-                    </Button>
+              >
+                Adicionar Link
+              </Button>
                   </PlanLocker>
                 ) : (
                   <Button
@@ -749,20 +749,20 @@ export default function EditLinksPage() {
                   Adicionar Link
                 </Button>
                 )}
-                </Box>
+            </Box>
 
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {pendingLinks.map((link, index) => (
-                    <Card 
-                      key={link.id}
-                      sx={{ 
-                        opacity: draggedIndex === index ? 0.5 : 1,
-                        transition: 'all 0.2s',
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {pendingLinks.map((link, index) => (
+                <Card 
+                  key={link.id}
+                  sx={{ 
+                    opacity: draggedIndex === index ? 0.5 : 1,
+                    transition: 'all 0.2s',
                         cursor: settings.sortMode === 'custom' ? 'move' : 'default',
-                        '&:hover': {
-                          bgcolor: 'action.hover'
-                        }
-                      }}
+                    '&:hover': {
+                      bgcolor: 'action.hover'
+                    }
+                  }}
                       onDragStart={() => settings.sortMode === 'custom' && handleDragStart(index)}
                       onDragEnter={() => settings.sortMode === 'custom' && handleDragEnter(index)}
                       onDragEnd={() => settings.sortMode === 'custom' && handleDragEnd()}
@@ -785,30 +785,30 @@ export default function EditLinksPage() {
                             width: '100%'
                           }}>
                             {settings.sortMode === 'custom' && (
-                              <DragIcon 
-                                sx={{ 
-                                  cursor: 'grab',
+                      <DragIcon 
+                        sx={{ 
+                          cursor: 'grab',
                                   '&:active': { cursor: 'grabbing' },
                                   fontSize: isMobile ? 20 : 24,
                                   opacity: 0.7
-                                }} 
-                              />
+                        }} 
+                      />
                             )}
-                            
-                            <TextField
-                              label="Título"
-                              value={link.title}
-                              onChange={(e) => handleUpdateLink(link.id, { title: e.target.value })}
-                              size="small"
+                      
+                      <TextField
+                        label="Título"
+                        value={link.title}
+                        onChange={(e) => handleUpdateLink(link.id, { title: e.target.value })}
+                        size="small"
                               fullWidth
-                            />
+                      />
                           </Box>
-                          
-                          <TextField
-                            label="URL"
-                            value={link.url}
-                            onChange={(e) => handleUpdateLink(link.id, { url: e.target.value })}
-                            size="small"
+                      
+                      <TextField
+                        label="URL"
+                        value={link.url}
+                        onChange={(e) => handleUpdateLink(link.id, { url: e.target.value })}
+                        size="small"
                             fullWidth
                           />
                           
@@ -819,30 +819,30 @@ export default function EditLinksPage() {
                             gap: 1,
                             width: '100%'
                           }}>
-                            <FormControlLabel
-                              control={
-                                <Switch
-                                  checked={link.visible}
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={link.visible}
                                   onChange={() => handleUpdateLink(link.id, { visible: !link.visible })}
                                   size={isMobile ? "small" : "medium"}
-                                />
-                              }
-                              label="Visível"
-                            />
-                            
-                            <IconButton 
-                              onClick={() => openDeleteDialog(link.id)}
-                              color="error"
+                          />
+                        }
+                        label="Visível"
+                      />
+                      
+                      <IconButton 
+                        onClick={() => openDeleteDialog(link.id)}
+                        color="error"
                               size={isMobile ? "small" : "medium"}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
+                      >
+                        <DeleteIcon />
+                      </IconButton>
                           </Box>
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
               </Box>
             )}
           </Box>
@@ -864,15 +864,15 @@ export default function EditLinksPage() {
                 profileData={profileData}
                 onSettingsChange={(newSettings) => {
                   setSettings(prev => ({
-                    ...prev,
+                          ...prev,
                     ...newSettings
                   }))
                   setHasChanges(true)
                 }}
                 onAvatarChange={handleAvatarChange}
-                isMobile={isMobile}
-              />
-            </Box>
+                        isMobile={isMobile}
+                      />
+                    </Box>
 
             <Box sx={{ 
               flex: 1,

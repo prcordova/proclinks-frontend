@@ -4,12 +4,11 @@ import { getPlanStyle } from '@/utils/planStyles'
 import { FriendshipButton } from '../FriendshipButton/friendship-button'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { userApi } from '@/services/api'
 import { toast } from 'react-hot-toast'
-import { formatDistanceToNow } from 'date-fns/formatDistanceToNow'
-import { ptBR } from 'date-fns/locale'
-
+import { format } from 'date-fns'
+ 
 interface User {
   _id: string
   username: string
@@ -23,8 +22,8 @@ interface User {
   }
   friendshipStatus?: 'NONE' | 'PENDING' | 'FRIENDLY'
   friendshipId?: string
-  friendshipInitiator?: 'ME' | 'THEM'
-  recipient?: string
+  isRequester?: boolean
+  isRecipient?: boolean
   createdAt?: string
 }
 
@@ -47,19 +46,8 @@ export function UserCard({
   const router = useRouter()
   const { user: currentUser } = useAuth()
   const [friendshipStatus, setFriendshipStatus] = useState(user.friendshipStatus || 'NONE')
-  const [friendshipId, setFriendshipId] = useState<string | null>(null)
+  const friendshipId = user.friendshipId || null
   const [isLoading, setIsLoading] = useState(false)
-
-  useEffect(() => {
-    if (user._id) {
-      userApi.friendships.checkStatus(user._id)
-        .then(response => {
-          setFriendshipStatus(response.data.data.status)
-          setFriendshipId(response.data.data.friendshipId)
-        })
-        .catch(console.error)
-    }
-  }, [user._id])
 
   if (!user || !user.username) {
     return null
@@ -149,60 +137,81 @@ export function UserCard({
         height: '240px',
         p: 2,
         '&:last-child': { pb: 2 },
-        overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column'
       }}>
+        {/* Área de conteúdo principal */}
         <Box sx={{ 
           display: 'flex', 
           flexDirection: 'column',
-          alignItems: 'center', 
-          width: '100%',
-          gap: 1,
-          flex: 1
+          alignItems: 'center',
+          gap: 2,
+          flex: 1,
+          minHeight: 0 // Importante para o flex funcionar corretamente
         }}>
-          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-            {user.username}
-          </Typography>
-
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            gap: 4
+          {/* Informações do usuário */}
+          <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 1
           }}>
-           
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
-                Seguidores
-              </Typography>
-              <Typography variant="body1" fontWeight="bold">
-                {Array.isArray(user.followers) ? user.followers.length : user.followers}
-              </Typography>
-            </Box>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
-                Seguindo
-              </Typography>
-              <Typography variant="body1" fontWeight="bold">
-                {Array.isArray(user.following) ? user.following.length : user.following}
-              </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              {user.username}
+            </Typography>
+
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              gap: 4
+            }}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  Seguidores
+                </Typography>
+                <Typography variant="body1" fontWeight="bold">
+                  {Array.isArray(user.followers) ? user.followers.length : user.followers}
+                </Typography>
+              </Box>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  Seguindo
+                </Typography>
+                <Typography variant="body1" fontWeight="bold">
+                  {Array.isArray(user.following) ? user.following.length : user.following}
+                </Typography>
+              </Box>
             </Box>
           </Box>
-          
+
+          {/* Texto de tempo - agora no meio */}
+          {user.createdAt && (
+            <Typography variant="caption" color="text.secondary" align="center">
+              {user.friendshipStatus === 'FRIENDLY' ? 'Amigos desde ' : 'Solicitação enviada em '}
+              {format(new Date(user.createdAt), "dd 'de' MMMM 'de' yyyy")}
+            </Typography>
+          )}
+        </Box>
+
+        {/* Área de botões - sempre no final */}
+        <Box sx={{ 
+          mt: 'auto',
+          pt: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1
+        }}>
           {showFriendshipButton && currentUser?.id !== user._id && (
-            <Box sx={{ width: '100%', mt: 'auto' }}>
-              <FriendshipButton
-                status={friendshipStatus}
-                onClick={handleFriendshipAction}
-                size="small"
-                disabled={isLoading}
-              />
-            </Box>
+            <FriendshipButton
+              status={friendshipStatus}
+              onClick={handleFriendshipAction}
+              size="small"
+              disabled={isLoading}
+            />
           )}
 
-          {/* Solicitações que EU recebi - botões de aceitar/recusar */}
           {showFriendshipActions && user.friendshipStatus === 'PENDING' && (
-            <Box sx={{ display: 'flex', gap: 1, width: '100%', mt: 'auto' }}>
+            <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
               {isRequester ? (
                 <Button
                   variant="outlined"
@@ -243,14 +252,7 @@ export function UserCard({
               )}
             </Box>
           )}
-          {user.createdAt && (
-          <Typography variant="caption" color="text.secondary">
-            {user.friendshipStatus === 'FRIENDLY' ? 'Amigos desde ' : 'Solicitação enviada '}
-            {formatDistanceToNow(new Date(user.createdAt), { locale: ptBR, addSuffix: true })}
-          </Typography>
-        )}
         </Box>
-        
       </CardContent>
     </Card>
   )
