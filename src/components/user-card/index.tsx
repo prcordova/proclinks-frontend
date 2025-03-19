@@ -274,29 +274,29 @@ export function UserCard({
           flexDirection: 'column',
           gap: 1
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
-            {shouldShowFriendshipButton() && (
-              <Box sx={{ flex: 1 }}>
-                <FriendshipButton
-                  status={friendshipStatus}
-                  onClick={handleFriendshipAction}
-                  size="small"
-                  disabled={isLoading}
-                  isRequester={user.isRequester}
-                  isRecipient={user.isRecipient}
-                />
-              </Box>
-            )}
-            {friendshipStatus === 'FRIENDLY' && (
-              <IconButton
-                onClick={handleOpenChat}
-                size="small"
-                color="primary"
-              >
-                <ChatIcon />
-              </IconButton>
-            )}
-          </Box>
+          {shouldShowFriendshipButton() && (
+            <FriendshipButton
+              status={friendshipStatus}
+              onClick={handleFriendshipAction}
+              size="small"
+              disabled={isLoading}
+              isRequester={user.isRequester}
+              isRecipient={user.isRecipient}
+            />
+          )}
+          
+          {friendshipStatus === 'FRIENDLY' && (
+            <Button
+              onClick={handleOpenChat}
+              size="small"
+              color="primary"
+              variant="outlined"
+              startIcon={<ChatIcon />}
+              fullWidth
+            >
+              Enviar mensagem
+            </Button>
+          )}
 
           {friendshipStatus === 'PENDING' && (
             <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
