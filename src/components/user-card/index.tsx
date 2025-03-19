@@ -1,4 +1,4 @@
-import { Avatar, Card, CardContent,  Button, Box, Typography } from '@mui/material'
+import { Avatar, Card, CardContent,  Button, Box, Typography, IconButton } from '@mui/material'
 import { getImageUrl } from '@/utils/url'
 import { getPlanStyle } from '@/utils/planStyles'
 import { FriendshipButton } from '../FriendshipButton/friendship-button'
@@ -8,6 +8,8 @@ import { useState } from 'react'
 import { userApi } from '@/services/api'
 import { toast } from 'react-hot-toast'
 import { format } from 'date-fns'
+import ChatIcon from '@mui/icons-material/Chat'
+import { useChat } from '@/contexts/chat-context'
  
 interface User {
   _id: string
@@ -32,7 +34,7 @@ interface UserCardProps {
   showFriendshipButton?: boolean
   showFriendshipActions?: boolean
   isRequester?: boolean
-  onFriendshipAction?: (action: 'accept' | 'reject' | 'cancel' | 'send' | 'unfriend', friendshipId?: string, userId?: string) => Promise<void>
+  onFriendshipAction?: (action: 'accept' | 'reject' | 'cancel' | 'send' | 'unfriend', friendshipId?: string) => Promise<void>
 }
 
 export function UserCard({ 
@@ -44,6 +46,7 @@ export function UserCard({
 }: UserCardProps) {
   const router = useRouter()
   const { user: currentUser } = useAuth()
+  const { openChat, updateFriendshipStatus } = useChat()
   const [friendshipStatus, setFriendshipStatus] = useState(user.friendshipStatus || 'NONE')
   const friendshipId = user.friendshipId || null
   const [isLoading, setIsLoading] = useState(false)
@@ -66,20 +69,25 @@ export function UserCard({
           case 'NONE':
             const response = await userApi.friendships.send(user._id)
             setFriendshipStatus('PENDING')
+            updateFriendshipStatus(user._id, 'PENDING')
             user.isRequester = true
             user.isRecipient = false
             user.friendshipId = response.data.data._id
-            onFriendshipAction('send', response.data.data._id, user._id)
+            onFriendshipAction('send', response.data.data._id)
             toast.success('Solicitação de amizade enviada!')
             break
           case 'PENDING':
             if (friendshipId) {
               if (user.isRecipient) {
-                toast.error('Você não pode cancelar uma solicitação que recebeu')
+                await onFriendshipAction('accept', friendshipId)
+                setFriendshipStatus('FRIENDLY')
+                updateFriendshipStatus(user._id, 'FRIENDLY')
+                toast.success('Solicitação aceita!')
                 return
               }
-              await onFriendshipAction('cancel', friendshipId, user._id)
+              await onFriendshipAction('cancel', friendshipId)
               setFriendshipStatus('NONE')
+              updateFriendshipStatus(user._id, 'NONE')
               user.isRequester = false
               user.isRecipient = false
               toast.success('Solicitação cancelada!')
@@ -87,8 +95,9 @@ export function UserCard({
             break
           case 'FRIENDLY':
             if (friendshipId) {
-              await onFriendshipAction('unfriend', friendshipId, user._id)
+              await onFriendshipAction('unfriend', friendshipId)
               setFriendshipStatus('NONE')
+              updateFriendshipStatus(user._id, 'NONE')
               user.isRequester = false
               user.isRecipient = false
               toast.success('Amizade removida!')
@@ -102,13 +111,22 @@ export function UserCard({
         case 'NONE':
           await userApi.friendships.send(user._id)
           setFriendshipStatus('PENDING')
+          updateFriendshipStatus(user._id, 'PENDING')
           toast.success('Solicitação de amizade enviada!')
           break
 
         case 'PENDING':
           if (friendshipId) {
+            if (user.isRecipient) {
+              await userApi.friendships.accept(friendshipId)
+              setFriendshipStatus('FRIENDLY')
+              updateFriendshipStatus(user._id, 'FRIENDLY')
+              toast.success('Solicitação aceita!')
+              return
+            }
             await userApi.friendships.reject(friendshipId)
             setFriendshipStatus('NONE')
+            updateFriendshipStatus(user._id, 'NONE')
             toast.success('Solicitação de amizade cancelada!')
           }
           break
@@ -117,6 +135,7 @@ export function UserCard({
           if (friendshipId) {
             await userApi.friendships.unfriend(friendshipId)
             setFriendshipStatus('NONE')
+            updateFriendshipStatus(user._id, 'NONE')
             toast.success('Amizade removida!')
           }
           break
@@ -127,6 +146,16 @@ export function UserCard({
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleOpenChat = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    openChat({
+      userId: user._id,
+      username: user.username,
+      avatar: user.avatar,
+      friendshipStatus: friendshipStatus
+    })
   }
 
   const shouldShowFriendshipButton = () => {
@@ -245,16 +274,29 @@ export function UserCard({
           flexDirection: 'column',
           gap: 1
         }}>
-          {shouldShowFriendshipButton() && (
-            <FriendshipButton
-              status={friendshipStatus}
-              onClick={handleFriendshipAction}
-              size="small"
-              disabled={isLoading}
-              isRequester={user.isRequester}
-              isRecipient={user.isRecipient}
-            />
-          )}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+            {shouldShowFriendshipButton() && (
+              <Box sx={{ flex: 1 }}>
+                <FriendshipButton
+                  status={friendshipStatus}
+                  onClick={handleFriendshipAction}
+                  size="small"
+                  disabled={isLoading}
+                  isRequester={user.isRequester}
+                  isRecipient={user.isRecipient}
+                />
+              </Box>
+            )}
+            {friendshipStatus === 'FRIENDLY' && (
+              <IconButton
+                onClick={handleOpenChat}
+                size="small"
+                color="primary"
+              >
+                <ChatIcon />
+              </IconButton>
+            )}
+          </Box>
 
           {friendshipStatus === 'PENDING' && (
             <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
@@ -265,7 +307,7 @@ export function UserCard({
                   fullWidth
                   onClick={(e) => {
                     e.stopPropagation()
-                    onFriendshipAction?.('cancel', friendshipId ?? undefined, user._id)
+                    onFriendshipAction?.('cancel', friendshipId ?? undefined)
                   }}
                 >
                   Cancelar solicitação
@@ -279,7 +321,7 @@ export function UserCard({
                     fullWidth
                     onClick={(e) => {
                       e.stopPropagation()
-                      onFriendshipAction?.('accept', friendshipId ?? undefined, user._id)
+                      onFriendshipAction?.('accept', friendshipId ?? undefined)
                     }}
                   >
                     Aceitar
@@ -290,7 +332,7 @@ export function UserCard({
                     fullWidth
                     onClick={(e) => {
                       e.stopPropagation()
-                      onFriendshipAction?.('reject', friendshipId ?? undefined, user._id)
+                      onFriendshipAction?.('reject', friendshipId ?? undefined)
                     }}
                   >
                     Recusar
