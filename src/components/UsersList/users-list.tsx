@@ -21,6 +21,9 @@ interface User {
   followers: number
   following: number
   friendshipStatus?: 'NONE' | 'PENDING' | 'FRIENDLY'
+  friendshipId?: string
+  isRequester?: boolean
+  isRecipient?: boolean
 }
 
 interface UsersListProps {
@@ -32,6 +35,52 @@ export function UsersList({ searchQuery, selectedFilter }: UsersListProps) {
   const [users, setUsers] = useState<User[]>([])
   const { setIsLoading, isLoading } = useLoading()
   const router = useRouter()
+
+  const handleFriendshipAction = async (action: 'accept' | 'reject' | 'cancel', friendshipId?: string) => {
+    try {
+      setIsLoading(true)
+      
+      switch (action) {
+        case 'accept':
+          await userApi.friendships.accept(friendshipId!)
+          toast.success('Solicitação aceita com sucesso!')
+          setUsers(prevUsers => prevUsers.map(user => 
+            user.friendshipId === friendshipId 
+              ? { ...user, friendshipStatus: 'FRIENDLY' }
+              : user
+          ))
+          break
+        case 'reject':
+          await userApi.friendships.reject(friendshipId!)
+          toast.success('Solicitação recusada com sucesso!')
+          setUsers(prevUsers => prevUsers.map(user => 
+            user.friendshipId === friendshipId 
+              ? { ...user, friendshipStatus: 'NONE', friendshipId: undefined, isRequester: false, isRecipient: false }
+              : user
+          ))
+          break
+        case 'cancel':
+          await userApi.friendships.reject(friendshipId!)
+          toast.success('Solicitação cancelada com sucesso!')
+          setUsers(prevUsers => prevUsers.map(user => 
+            user.friendshipId === friendshipId 
+              ? { ...user, friendshipStatus: 'NONE', friendshipId: undefined, isRequester: false, isRecipient: false }
+              : user
+          ))
+          break
+      }
+
+      setTimeout(() => {
+        fetchUsers()
+      }, 500)
+    } catch (error) {
+      toast.error('Erro ao processar solicitação')
+      console.error('Erro:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const fetchUsers = useCallback(async () => {
     try {
       setIsLoading(true)
@@ -86,6 +135,8 @@ export function UsersList({ searchQuery, selectedFilter }: UsersListProps) {
           key={user._id} 
           user={user}
           showFriendshipButton={true}
+          showFriendshipActions={false}
+          onFriendshipAction={handleFriendshipAction}
         />
       ))}
     </ContainerCards>

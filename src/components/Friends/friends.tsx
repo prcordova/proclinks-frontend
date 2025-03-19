@@ -49,8 +49,10 @@ interface PendingRequest {
 }
 
 interface UserWithFriendship extends User {
-  friendshipId?: string;
-  isRequester?: boolean;
+  friendshipId?: string
+  isRequester?: boolean
+  isRecipient?: boolean
+  createdAt?: string
 }
 
 interface FriendsProps {
@@ -101,7 +103,7 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
   const fetchPendingRequests = useCallback(async () => {
     try {
       setIsLoading(true)
-      const response = await userApi.friendships.pending()
+      const response = await userApi.friendships.sent()
       setPendingRequests(response.data.data)
     } catch (error) {
       console.error('Erro ao carregar solicitações enviadas:', error)
@@ -134,7 +136,7 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
   }, [])
 
   const handleFriendshipAction = async (
-    action: 'accept' | 'reject' | 'cancel', 
+    action: 'accept' | 'reject' | 'cancel' | 'send', 
     friendshipId?: string
   ) => {
     if (!friendshipId) return
@@ -145,10 +147,16 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
         await userApi.friendships.accept(friendshipId)
         toast.success('Solicitação aceita com sucesso!')
         await Promise.all([fetchReceivedRequests(), fetchFriends()])
-      } else {
+      } else if (action === 'cancel') {
         await userApi.friendships.reject(friendshipId)
-        toast.success(action === 'reject' ? 'Solicitação rejeitada' : 'Solicitação cancelada')
-        await fetchReceivedRequests()
+        toast.success('Solicitação cancelada')
+        await Promise.all([fetchPendingRequests(), fetchReceivedRequests()])
+      } else if (action === 'reject') {
+        await userApi.friendships.reject(friendshipId)
+        toast.success('Solicitação rejeitada')
+        await Promise.all([fetchReceivedRequests(), fetchFriends()])
+      } else if (action === 'send') {
+        await fetchPendingRequests()
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao processar solicitação'
@@ -209,10 +217,10 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
           following: request.user.following,
           friendshipStatus: 'PENDING' as const,
           friendshipId: request.id,
-          isRequester: true, // Indica que o usuário atual é o solicitante
+          isRequester: true,
+          isRecipient: false,
           plan: { type: 'FREE' as const },
           createdAt: request.createdAt
-           
         }))
       case 2: // Solicitações Recebidas
         return receivedRequests.map(request => ({
@@ -224,7 +232,8 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
           following: request.user.following,
           friendshipStatus: 'PENDING' as const,
           friendshipId: request.id,
-          isRequester: false, // Indica que o usuário atual é o destinatário
+          isRequester: false,
+          isRecipient: true,
           plan: { type: 'FREE' as const },
           createdAt: request.createdAt
         }))
@@ -279,9 +288,8 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
           <UserCard
             key={user._id}
             user={user}
-            showFriendshipActions={tabValue === 2 && !user.isRequester}
-            showFriendshipButton={true}
-            isRequester={user.isRequester}
+            showFriendshipActions={tabValue === 2 && user.friendshipStatus === 'PENDING' && user.isRecipient}
+            showFriendshipButton={tabValue === 3}
             onFriendshipAction={handleFriendshipAction}
           />
         ))}

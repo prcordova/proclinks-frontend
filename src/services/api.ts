@@ -163,7 +163,7 @@ export const userApi = {
     api.get(`/api/friendships/status/${userId}`),
   friendships: {
     list: () => api.get('/api/friendships/friends'),
-    pending: () => api.get('/api/friendships/requests/sent'),
+    sent: () => api.get('/api/friendships/requests/sent'),
     received: () => api.get('/api/friendships/requests/received'),
     send: (recipientId: string) => 
       api.post('/api/friendships/requests', { recipientId }),

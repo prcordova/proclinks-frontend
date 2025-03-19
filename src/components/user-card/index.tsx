@@ -32,15 +32,14 @@ interface UserCardProps {
   showFriendshipButton?: boolean
   showFriendshipActions?: boolean
   isRequester?: boolean
-
-  onFriendshipAction?: (action: 'accept' | 'reject' | 'cancel', friendshipId?: string) => Promise<void>
+  onFriendshipAction?: (action: 'accept' | 'reject' | 'cancel' | 'send', friendshipId?: string) => Promise<void>
 }
 
 export function UserCard({ 
   user, 
   showFriendshipButton = true,
   showFriendshipActions = false,
-  isRequester = false,
+ 
   onFriendshipAction
 }: UserCardProps) {
   const router = useRouter()
@@ -63,7 +62,39 @@ export function UserCard({
 
     try {
       if (onFriendshipAction) {
-        await onFriendshipAction('accept', friendshipId || undefined)
+        switch (friendshipStatus) {
+          case 'NONE':
+            const response = await userApi.friendships.send(user._id)
+            setFriendshipStatus('PENDING')
+            user.isRequester = true
+            user.isRecipient = false
+            user.friendshipId = response.data.data._id
+            onFriendshipAction('send', response.data.data._id)
+            toast.success('Solicitação de amizade enviada!')
+            break
+          case 'PENDING':
+            if (friendshipId) {
+              if (user.isRecipient) {
+                toast.error('Você não pode cancelar uma solicitação que recebeu')
+                return
+              }
+              await onFriendshipAction('cancel', friendshipId)
+              setFriendshipStatus('NONE')
+              user.isRequester = false
+              user.isRecipient = false
+              toast.success('Solicitação cancelada!')
+            }
+            break
+          case 'FRIENDLY':
+            if (friendshipId) {
+              await onFriendshipAction('reject', friendshipId)
+              setFriendshipStatus('NONE')
+              user.isRequester = false
+              user.isRecipient = false
+              toast.success('Amizade removida!')
+            }
+            break
+        }
         return
       }
 
@@ -96,6 +127,15 @@ export function UserCard({
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const shouldShowFriendshipButton = () => {
+    if (currentUser?.id === user._id) return false;
+    if (friendshipStatus === 'PENDING' && !user.isRequester) {
+      return false;
+    }
+
+    return showFriendshipButton;
   }
 
   return (
@@ -187,7 +227,11 @@ export function UserCard({
           {/* Texto de tempo - agora no meio */}
           {user.createdAt && (
             <Typography variant="caption" color="text.secondary" align="center">
-              {user.friendshipStatus === 'FRIENDLY' ? 'Amigos desde ' : 'Solicitação enviada em '}
+              {user.friendshipStatus === 'FRIENDLY' 
+                ? 'Amigos desde ' 
+                : user.isRequester 
+                  ? 'Solicitação enviada em ' 
+                  : 'Solicitação recebida em '}
               {format(new Date(user.createdAt), "dd 'de' MMMM 'de' yyyy")}
             </Typography>
           )}
@@ -201,30 +245,33 @@ export function UserCard({
           flexDirection: 'column',
           gap: 1
         }}>
-          {showFriendshipButton && currentUser?.id !== user._id && (
+          {shouldShowFriendshipButton() && (
             <FriendshipButton
               status={friendshipStatus}
               onClick={handleFriendshipAction}
               size="small"
               disabled={isLoading}
+              isRequester={user.isRequester}
+              isRecipient={user.isRecipient}
             />
           )}
 
-          {showFriendshipActions && user.friendshipStatus === 'PENDING' && (
+          {friendshipStatus === 'PENDING' && (
             <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
-              {isRequester ? (
+              {user.isRequester && (
                 <Button
                   variant="outlined"
                   color="error"
                   fullWidth
                   onClick={(e) => {
                     e.stopPropagation()
-                    onFriendshipAction?.('cancel', user.friendshipId)
+                    onFriendshipAction?.('cancel', friendshipId ?? undefined)
                   }}
                 >
                   Cancelar solicitação
                 </Button>
-              ) : (
+              )}
+              {user.isRecipient && showFriendshipActions && (
                 <>
                   <Button
                     variant="contained"
@@ -232,7 +279,7 @@ export function UserCard({
                     fullWidth
                     onClick={(e) => {
                       e.stopPropagation()
-                      onFriendshipAction?.('accept', user.friendshipId)
+                      onFriendshipAction?.('accept', friendshipId ?? undefined)
                     }}
                   >
                     Aceitar
@@ -243,7 +290,7 @@ export function UserCard({
                     fullWidth
                     onClick={(e) => {
                       e.stopPropagation()
-                      onFriendshipAction?.('reject', user.friendshipId)
+                      onFriendshipAction?.('reject', friendshipId ?? undefined)
                     }}
                   >
                     Recusar
