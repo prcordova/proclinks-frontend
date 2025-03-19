@@ -36,7 +36,7 @@ export function UsersList({ searchQuery, selectedFilter }: UsersListProps) {
   const { setIsLoading, isLoading } = useLoading()
   const router = useRouter()
 
-  const handleFriendshipAction = async (action: 'accept' | 'reject' | 'cancel', friendshipId?: string) => {
+  const handleFriendshipAction = async (action: 'accept' | 'reject' | 'cancel' | 'send' | 'unfriend', friendshipId?: string) => {
     try {
       setIsLoading(true)
       
@@ -68,11 +68,24 @@ export function UsersList({ searchQuery, selectedFilter }: UsersListProps) {
               : user
           ))
           break
+        case 'unfriend':
+          await userApi.friendships.unfriend(friendshipId!)
+          toast.success('Amizade removida com sucesso!')
+          setUsers(prevUsers => prevUsers.map(user => 
+            user.friendshipId === friendshipId 
+              ? { ...user, friendshipStatus: 'NONE', friendshipId: undefined, isRequester: false, isRecipient: false }
+              : user
+          ))
+          break
+        case 'send':
+          toast.success('Solicitação de amizade enviada!')
+          setUsers(prevUsers => prevUsers.map(user => 
+            user.friendshipId === friendshipId 
+              ? { ...user, friendshipStatus: 'PENDING', friendshipId: friendshipId, isRequester: true, isRecipient: false }
+              : user
+          ))
+          break
       }
-
-      setTimeout(() => {
-        fetchUsers()
-      }, 500)
     } catch (error) {
       toast.error('Erro ao processar solicitação')
       console.error('Erro:', error)
@@ -135,7 +148,7 @@ export function UsersList({ searchQuery, selectedFilter }: UsersListProps) {
           key={user._id} 
           user={user}
           showFriendshipButton={true}
-          showFriendshipActions={false}
+          showFriendshipActions={true}
           onFriendshipAction={handleFriendshipAction}
         />
       ))}

@@ -32,7 +32,7 @@ interface UserCardProps {
   showFriendshipButton?: boolean
   showFriendshipActions?: boolean
   isRequester?: boolean
-  onFriendshipAction?: (action: 'accept' | 'reject' | 'cancel' | 'send', friendshipId?: string) => Promise<void>
+  onFriendshipAction?: (action: 'accept' | 'reject' | 'cancel' | 'send' | 'unfriend', friendshipId?: string, userId?: string) => Promise<void>
 }
 
 export function UserCard({ 
@@ -69,7 +69,7 @@ export function UserCard({
             user.isRequester = true
             user.isRecipient = false
             user.friendshipId = response.data.data._id
-            onFriendshipAction('send', response.data.data._id)
+            onFriendshipAction('send', response.data.data._id, user._id)
             toast.success('Solicitação de amizade enviada!')
             break
           case 'PENDING':
@@ -78,7 +78,7 @@ export function UserCard({
                 toast.error('Você não pode cancelar uma solicitação que recebeu')
                 return
               }
-              await onFriendshipAction('cancel', friendshipId)
+              await onFriendshipAction('cancel', friendshipId, user._id)
               setFriendshipStatus('NONE')
               user.isRequester = false
               user.isRecipient = false
@@ -87,7 +87,7 @@ export function UserCard({
             break
           case 'FRIENDLY':
             if (friendshipId) {
-              await onFriendshipAction('reject', friendshipId)
+              await onFriendshipAction('unfriend', friendshipId, user._id)
               setFriendshipStatus('NONE')
               user.isRequester = false
               user.isRecipient = false
@@ -131,7 +131,7 @@ export function UserCard({
 
   const shouldShowFriendshipButton = () => {
     if (currentUser?.id === user._id) return false;
-    if (friendshipStatus === 'PENDING' && !user.isRequester) {
+    if (friendshipStatus === 'PENDING' && user.isRecipient) {
       return false;
     }
 
@@ -265,7 +265,7 @@ export function UserCard({
                   fullWidth
                   onClick={(e) => {
                     e.stopPropagation()
-                    onFriendshipAction?.('cancel', friendshipId ?? undefined)
+                    onFriendshipAction?.('cancel', friendshipId ?? undefined, user._id)
                   }}
                 >
                   Cancelar solicitação
@@ -279,7 +279,7 @@ export function UserCard({
                     fullWidth
                     onClick={(e) => {
                       e.stopPropagation()
-                      onFriendshipAction?.('accept', friendshipId ?? undefined)
+                      onFriendshipAction?.('accept', friendshipId ?? undefined, user._id)
                     }}
                   >
                     Aceitar
@@ -290,7 +290,7 @@ export function UserCard({
                     fullWidth
                     onClick={(e) => {
                       e.stopPropagation()
-                      onFriendshipAction?.('reject', friendshipId ?? undefined)
+                      onFriendshipAction?.('reject', friendshipId ?? undefined, user._id)
                     }}
                   >
                     Recusar
