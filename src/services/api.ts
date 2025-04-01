@@ -165,16 +165,12 @@ export const userApi = {
     list: () => api.get('/api/friendships/friends'),
     sent: () => api.get('/api/friendships/requests/sent'),
     received: () => api.get('/api/friendships/requests/received'),
-    send: (recipientId: string) => 
-      api.post('/api/friendships/requests', { recipientId }),
-    accept: (requestId: string) => 
-      api.post(`/api/friendships/requests/${requestId}/accept`),
-    reject: (requestId: string) => 
-      api.post(`/api/friendships/requests/${requestId}/reject`),
-    unfriend: (friendshipId: string) => 
-      api.post(`/api/friendships/${friendshipId}/unfriend`),
-    checkStatus: (userId: string) =>
-      api.get(`/api/friendships/status/${userId}`),
+    send: (recipientId: string) => api.post('/api/friendships/requests', { recipientId }),
+    accept: (requestId: string) => api.post(`/api/friendships/requests/${requestId}/accept`),
+    reject: (requestId: string) => api.post(`/api/friendships/requests/${requestId}/reject`),
+    unfriend: (friendshipId: string) => api.post(`/api/friendships/${friendshipId}/unfriend`),
+    listFriends: () => api.get('/api/friendships/friends'),
+    checkStatus: (userId: string) => api.get(`/api/friendships/status/${userId}`),
     suggestions: () => api.get('/api/friendships/suggestions')
   }
 }
@@ -246,5 +242,19 @@ export const paymentApi = {
     }
   }
 };
+
+export const messageApi = {
+  getMessages: (userId: string, otherUserId: string) => 
+    api.get(`/api/messages/${userId}/${otherUserId}`),
+  
+  markAsRead: (userId: string, otherUserId: string) => 
+    api.post(`/api/messages/${userId}/${otherUserId}/read`),
+  
+  getConversations: () => 
+    api.get('/api/messages/conversations'),
+
+  saveMessage: (data: { senderId: string, recipientId: string, content: string }) => 
+    api.post('/api/messages', data)
+}
 
 export default api 

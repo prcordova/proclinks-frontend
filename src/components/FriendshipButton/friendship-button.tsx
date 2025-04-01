@@ -14,13 +14,13 @@ interface FriendshipButtonProps {
 
 const statusConfig = {
   NONE: {
-    text: 'Adicionar amigo',
+    text: 'Amigar',
     icon: PersonAddIcon,
     color: 'primary',
     variant: 'contained'
   },
   PENDING: {
-    text: 'Solicitação enviada',
+    text: 'Enviada',
     icon: HourglassEmptyIcon,
     color: 'warning',
     variant: 'outlined'

@@ -10,11 +10,13 @@ import { useThemeContext } from '@/contexts/theme-context'
 import { useAuth } from '@/contexts/auth-context'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 import LightModeIcon from '@mui/icons-material/LightMode'
- import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { usePathname } from 'next/dist/client/components/navigation'
-import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined'
+import PublicIcon from '@mui/icons-material/Public'
+import ChatIcon from '@mui/icons-material/Chat'
 import { CustomAvatar } from '@/components/avatar'
 import { useLoading } from '@/contexts/loading-context'
+import { AxiosError } from 'axios'
 
 export function Header() {
   const { setIsLoading } = useLoading()
@@ -34,9 +36,16 @@ export function Header() {
       return
     }
 
-    setIsLoading(true)
-    handleClose()
-    router.push(path)
+    try {
+      setIsLoading(true)
+      handleClose()
+      router.push(path)
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.status === 401) {
+        logout()
+        router.push('/login')
+      }
+    }
   }
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -79,14 +88,27 @@ export function Header() {
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Tooltip title="Explorar Perfis">
-              <IconButton
-                onClick={() => handleNavigation('/explorer')}
-                sx={{ color: 'text.secondary' }}
-              >
-                <PeopleAltOutlinedIcon />
-              </IconButton>
-            </Tooltip>
+            {user && (
+              <>
+                <Tooltip title="Explorar">
+                  <IconButton
+                    onClick={() => handleNavigation('/explorer')}
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    <PublicIcon />
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip title="Mensagens">
+                  <IconButton
+                    onClick={() => handleNavigation('/chats')}
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    <ChatIcon />
+                  </IconButton>
+                </Tooltip>
+              </>
+            )}
 
             <IconButton 
               onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}
@@ -130,6 +152,7 @@ export function Header() {
                   <MenuItem onClick={() => {
                     handleClose()
                     logout()
+                    router.push('/login')
                   }}>
                     Sair
                   </MenuItem>

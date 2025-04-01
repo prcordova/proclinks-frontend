@@ -1,6 +1,6 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@mui/material'
 
 interface FollowButtonProps {
   text: string
@@ -13,8 +13,14 @@ export function FollowButton({ text, isLoading, onClick }: FollowButtonProps) {
     <Button
       onClick={onClick}
       disabled={isLoading}
-      variant={text === 'seguindo' ? 'outline' : 'default'}
-      size="sm"
+      variant="outlined"
+      color="primary"
+      fullWidth
+      sx={{
+        py: 1,
+        textTransform: 'none',
+        fontWeight: 'medium'
+      }}
     >
       {isLoading ? 'Carregando...' : text}
     </Button>
