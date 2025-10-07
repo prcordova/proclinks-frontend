@@ -110,7 +110,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     return () => {
       newSocket.close()
     }
-  }, [user])
+  }, [user, updateFriendshipStatus])
 
   const loadChatHistory = useCallback(async (userId: string, otherUserId: string) => {
     try {

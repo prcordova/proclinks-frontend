@@ -222,7 +222,15 @@ export function ProfileContent({ username }: { username: string }) {
   }
 
   if (!profile) {
-    return  setIsLoading(true)
+    return (
+      <Container>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+          <Typography variant="h6" color="text.secondary">
+            Carregando perfil...
+          </Typography>
+        </Box>
+      </Container>
+    )
   }
 
   return (
