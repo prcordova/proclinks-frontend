@@ -124,7 +124,7 @@ export function UsersList({ searchQuery, selectedFilter }: UsersListProps) {
     } finally {
       setIsLoading(false)
     }
-  }, [searchQuery, selectedFilter, setIsLoading])
+  }, [searchQuery, selectedFilter, setIsLoading, router])
 
   useEffect(() => {
     const timer = setTimeout(() => {

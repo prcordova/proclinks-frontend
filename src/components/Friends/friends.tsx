@@ -136,7 +136,7 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
   }, [])
 
   const handleFriendshipAction = async (
-    action: 'accept' | 'reject' | 'cancel' | 'send', 
+    action: 'accept' | 'reject' | 'cancel' | 'send' | 'unfriend', 
     friendshipId?: string
   ) => {
     if (!friendshipId) return
@@ -181,7 +181,7 @@ export function Friends({ initialTab = 0 }: FriendsProps) {
     } finally {
       setIsLoading(false)
     }
-  }, [fetchFriends, fetchPendingRequests, fetchReceivedRequests, fetchSuggestions])
+  }, [fetchFriends, fetchPendingRequests, fetchReceivedRequests, fetchSuggestions, setIsLoading])
 
   useEffect(() => {
     loadAllData()

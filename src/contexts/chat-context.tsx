@@ -109,11 +109,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     return () => {
       newSocket.close()
-      if (socket) {
-        socket.off('friendship_update')
-      }
     }
-  }, [user, updateFriendshipStatus])
+  }, [user])
 
   const loadChatHistory = useCallback(async (userId: string, otherUserId: string) => {
     try {
@@ -125,6 +122,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       toast.error('Erro ao carregar mensagens')
       return []
     }
+  }, [])
+
+  const maximizeChat = useCallback((userId: string) => {
+    setOpenChats(current =>
+      current.map(chat =>
+        chat.userId === userId ? { ...chat, isMinimized: false } : chat
+      )
+    )
   }, [])
 
   const openChat = useCallback(async (chatUser: ChatUser) => {
@@ -160,7 +165,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       console.error('Erro ao abrir chat:', error)
       toast.error('Erro ao carregar o chat')
     }
-  }, [openChats, user, loadChatHistory])
+  }, [openChats, user, loadChatHistory, maximizeChat])
 
   const closeChat = useCallback((userId: string) => {
     setOpenChats(current => current.filter(chat => chat.userId !== userId))
@@ -170,14 +175,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setOpenChats(current =>
       current.map(chat =>
         chat.userId === userId ? { ...chat, isMinimized: true } : chat
-      )
-    )
-  }, [])
-
-  const maximizeChat = useCallback((userId: string) => {
-    setOpenChats(current =>
-      current.map(chat =>
-        chat.userId === userId ? { ...chat, isMinimized: false } : chat
       )
     )
   }, [])

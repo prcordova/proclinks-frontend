@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Container,
   Typography,
@@ -8,7 +8,6 @@ import {
   Card,
   CardContent,
   Avatar,
-  Button,
   TextField,
   InputAdornment,
   IconButton,
@@ -30,7 +29,6 @@ import { useChat } from '@/contexts/chat-context'
 import { userApi, messageApi } from '@/services/api'
 import { getImageUrl } from '@/utils/url'
 import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
 import toast from 'react-hot-toast'
 
 interface User {
@@ -66,35 +64,30 @@ export default function ChatsPage() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState(0)
-  const [loading, setLoading] = useState(false)
 
   // Buscar amigos do usuário
-  const fetchFriends = async () => {
+  const fetchFriends = useCallback(async () => {
     if (!user) return
 
     try {
-      setLoading(true)
       const response = await userApi.friendships.listFriends()
       setFriends(response.data.data || [])
     } catch (error) {
       console.error('Erro ao buscar amigos:', error)
       toast.error('Erro ao carregar amigos')
-    } finally {
-      setLoading(false)
     }
-  }
+  }, [user])
 
   // Buscar conversas com mensagens recentes
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     if (!user) return
 
     try {
-      setLoading(true)
       const response = await messageApi.getConversations()
       const conversationsData = response.data.data || []
 
       // Converter os dados do backend para o formato esperado
-      const formattedConversations: Conversation[] = conversationsData.map((conv: any) => ({
+      const formattedConversations: Conversation[] = conversationsData.map((conv: { user: User; lastMessage: Message; unreadCount: number }) => ({
         user: conv.user,
         lastMessage: conv.lastMessage,
         unreadCount: conv.unreadCount || 0
@@ -104,17 +97,15 @@ export default function ChatsPage() {
     } catch (error) {
       console.error('Erro ao buscar conversas:', error)
       toast.error('Erro ao carregar conversas')
-    } finally {
-      setLoading(false)
     }
-  }
+  }, [user])
 
   useEffect(() => {
     if (user) {
       fetchFriends()
       fetchConversations()
     }
-  }, [user])
+  }, [user, fetchFriends, fetchConversations])
 
   const handleStartChat = (friend: User) => {
     openChat({

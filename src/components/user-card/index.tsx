@@ -5,7 +5,6 @@ import {
   Button,
   Box,
   Typography,
-  IconButton,
 } from "@mui/material";
 import { getImageUrl } from "@/utils/url";
 import { getPlanStyle } from "@/utils/planStyles";
@@ -317,8 +316,6 @@ export function UserCard({
               onClick={handleFriendshipAction}
               size="small"
               disabled={isLoading}
-              isRequester={user.isRequester}
-              isRecipient={user.isRecipient}
             />
           )}
 
