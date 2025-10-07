@@ -1,200 +1,218 @@
-import { Avatar, Card, CardContent,  Button, Box, Typography, IconButton } from '@mui/material'
-import { getImageUrl } from '@/utils/url'
-import { getPlanStyle } from '@/utils/planStyles'
-import { FriendshipButton } from '../FriendshipButton/friendship-button'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/auth-context'
-import { useState } from 'react'
-import { userApi } from '@/services/api'
-import { toast } from 'react-hot-toast'
-import { format } from 'date-fns'
-import ChatIcon from '@mui/icons-material/Chat'
-import { useChat } from '@/contexts/chat-context'
- 
+import {
+  Avatar,
+  Card,
+  CardContent,
+  Button,
+  Box,
+  Typography,
+  IconButton,
+} from "@mui/material";
+import { getImageUrl } from "@/utils/url";
+import { getPlanStyle } from "@/utils/planStyles";
+import { FriendshipButton } from "../FriendshipButton/friendship-button";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
+import { useState } from "react";
+import { userApi } from "@/services/api";
+import { toast } from "react-hot-toast";
+import { format } from "date-fns";
+import ChatIcon from "@mui/icons-material/Chat";
+import { useChat } from "@/contexts/chat-context";
+
 interface User {
-  _id: string
-  username: string
-  avatar?: string
-  bio?: string
-  followers: number | string[]
-  following: number | string[]
-  totalLikes?: number
+  _id: string;
+  username: string;
+  avatar?: string;
+  bio?: string;
+  followers: number | string[];
+  following: number | string[];
+  totalLikes?: number;
   plan?: {
-    type: 'FREE' | 'BRONZE' | 'SILVER' | 'GOLD'
-  }
-  friendshipStatus?: 'NONE' | 'PENDING' | 'FRIENDLY'
-  friendshipId?: string
-  isRequester?: boolean
-  isRecipient?: boolean
-  createdAt?: string
+    type: "FREE" | "BRONZE" | "SILVER" | "GOLD";
+  };
+  friendshipStatus?: "NONE" | "PENDING" | "FRIENDLY";
+  friendshipId?: string;
+  isRequester?: boolean;
+  isRecipient?: boolean;
+  createdAt?: string;
 }
 
 interface UserCardProps {
-  user: User
-  showFriendshipButton?: boolean
-  showFriendshipActions?: boolean
-  isRequester?: boolean
-  onFriendshipAction?: (action: 'accept' | 'reject' | 'cancel' | 'send' | 'unfriend', friendshipId?: string) => Promise<void>
+  user: User;
+  showFriendshipButton?: boolean;
+  showFriendshipActions?: boolean;
+  isRequester?: boolean;
+  onFriendshipAction?: (
+    action: "accept" | "reject" | "cancel" | "send" | "unfriend",
+    friendshipId?: string
+  ) => Promise<void>;
 }
 
-export function UserCard({ 
-  user, 
+export function UserCard({
+  user,
   showFriendshipButton = true,
   showFriendshipActions = false,
- 
-  onFriendshipAction
+
+  onFriendshipAction,
 }: UserCardProps) {
-  const router = useRouter()
-  const { user: currentUser } = useAuth()
-  const { openChat, updateFriendshipStatus } = useChat()
-  const [friendshipStatus, setFriendshipStatus] = useState(user.friendshipStatus || 'NONE')
-  const friendshipId = user.friendshipId || null
-  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter();
+  const { user: currentUser } = useAuth();
+  const { openChat, updateFriendshipStatus } = useChat();
+  const [friendshipStatus, setFriendshipStatus] = useState(
+    user.friendshipStatus || "NONE"
+  );
+  const friendshipId = user.friendshipId || null;
+  const [isLoading, setIsLoading] = useState(false);
 
   if (!user || !user.username) {
-    return null
+    return null;
   }
 
   const handleCardClick = () => {
-    router.push(`/user/${user.username}`)
-  }
+    router.push(`/user/${user.username}`);
+  };
 
   const handleFriendshipAction = async () => {
-    if (isLoading) return
-    setIsLoading(true)
+    if (isLoading) return;
+    setIsLoading(true);
 
     try {
       if (onFriendshipAction) {
         switch (friendshipStatus) {
-          case 'NONE':
-            const response = await userApi.friendships.send(user._id)
-            setFriendshipStatus('PENDING')
-            updateFriendshipStatus(user._id, 'PENDING')
-            user.isRequester = true
-            user.isRecipient = false
-            user.friendshipId = response.data.data._id
-            onFriendshipAction('send', response.data.data._id)
-            toast.success('Solicitação de amizade enviada!')
-            break
-          case 'PENDING':
+          case "NONE":
+            const response = await userApi.friendships.send(user._id);
+            setFriendshipStatus("PENDING");
+            updateFriendshipStatus(user._id, "PENDING");
+            user.isRequester = true;
+            user.isRecipient = false;
+            user.friendshipId = response.data.data._id;
+            onFriendshipAction("send", response.data.data._id);
+            toast.success("Solicitação de amizade enviada!");
+            break;
+          case "PENDING":
             if (friendshipId) {
               if (user.isRecipient) {
-                await onFriendshipAction('accept', friendshipId)
-                setFriendshipStatus('FRIENDLY')
-                updateFriendshipStatus(user._id, 'FRIENDLY')
-                toast.success('Solicitação aceita!')
-                return
+                await onFriendshipAction("accept", friendshipId);
+                setFriendshipStatus("FRIENDLY");
+                updateFriendshipStatus(user._id, "FRIENDLY");
+                toast.success("Solicitação aceita!");
+                return;
               }
-              await onFriendshipAction('cancel', friendshipId)
-              setFriendshipStatus('NONE')
-              updateFriendshipStatus(user._id, 'NONE')
-              user.isRequester = false
-              user.isRecipient = false
-              toast.success('Solicitação cancelada!')
+              await onFriendshipAction("cancel", friendshipId);
+              setFriendshipStatus("NONE");
+              updateFriendshipStatus(user._id, "NONE");
+              user.isRequester = false;
+              user.isRecipient = false;
+              toast.success("Solicitação cancelada!");
             }
-            break
-          case 'FRIENDLY':
+            break;
+          case "FRIENDLY":
             if (friendshipId) {
-              await onFriendshipAction('unfriend', friendshipId)
-              setFriendshipStatus('NONE')
-              updateFriendshipStatus(user._id, 'NONE')
-              user.isRequester = false
-              user.isRecipient = false
-              toast.success('Amizade removida!')
+              await onFriendshipAction("unfriend", friendshipId);
+              setFriendshipStatus("NONE");
+              updateFriendshipStatus(user._id, "NONE");
+              user.isRequester = false;
+              user.isRecipient = false;
+              toast.success("Amizade removida!");
             }
-            break
+            break;
         }
-        return
+        return;
       }
 
       switch (friendshipStatus) {
-        case 'NONE':
-          await userApi.friendships.send(user._id)
-          setFriendshipStatus('PENDING')
-          updateFriendshipStatus(user._id, 'PENDING')
-          toast.success('Solicitação de amizade enviada!')
-          break
+        case "NONE":
+          await userApi.friendships.send(user._id);
+          setFriendshipStatus("PENDING");
+          updateFriendshipStatus(user._id, "PENDING");
+          toast.success("Solicitação de amizade enviada!");
+          break;
 
-        case 'PENDING':
+        case "PENDING":
           if (friendshipId) {
             if (user.isRecipient) {
-              await userApi.friendships.accept(friendshipId)
-              setFriendshipStatus('FRIENDLY')
-              updateFriendshipStatus(user._id, 'FRIENDLY')
-              toast.success('Solicitação aceita!')
-              return
+              await userApi.friendships.accept(friendshipId);
+              setFriendshipStatus("FRIENDLY");
+              updateFriendshipStatus(user._id, "FRIENDLY");
+              toast.success("Solicitação aceita!");
+              return;
             }
-            await userApi.friendships.reject(friendshipId)
-            setFriendshipStatus('NONE')
-            updateFriendshipStatus(user._id, 'NONE')
-            toast.success('Solicitação de amizade cancelada!')
+            await userApi.friendships.reject(friendshipId);
+            setFriendshipStatus("NONE");
+            updateFriendshipStatus(user._id, "NONE");
+            toast.success("Solicitação de amizade cancelada!");
           }
-          break
+          break;
 
-        case 'FRIENDLY':
+        case "FRIENDLY":
           if (friendshipId) {
-            await userApi.friendships.unfriend(friendshipId)
-            setFriendshipStatus('NONE')
-            updateFriendshipStatus(user._id, 'NONE')
-            toast.success('Amizade removida!')
+            await userApi.friendships.unfriend(friendshipId);
+            setFriendshipStatus("NONE");
+            updateFriendshipStatus(user._id, "NONE");
+            toast.success("Amizade removida!");
           }
-          break
+          break;
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao processar solicitação'
-      toast.error(errorMessage)
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Erro ao processar solicitação";
+      toast.error(errorMessage);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleOpenChat = (e: React.MouseEvent) => {
-    e.stopPropagation()
+    e.stopPropagation();
     openChat({
       userId: user._id,
       username: user.username,
       avatar: user.avatar,
-      friendshipStatus: friendshipStatus
-    })
-  }
+      friendshipStatus: friendshipStatus,
+    });
+  };
 
   const shouldShowFriendshipButton = () => {
     if (currentUser?.id === user._id) return false;
-    if (friendshipStatus === 'PENDING' && user.isRecipient) {
+    if (friendshipStatus === "PENDING" && user.isRecipient) {
       return false;
     }
 
     return showFriendshipButton;
-  }
+  };
 
   return (
-    <Card sx={{ 
-      height: '100%',
-      minWidth: 250,
-      maxWidth: '290px',
-      '&:hover': { 
-        transform: 'translateY(-4px)',
-        boxShadow: 4
-      },
-      transition: 'all 0.2s'
-    }}>
+    <Card
+      sx={{
+        height: "100%",
+        minWidth: 250,
+        maxWidth: "290px",
+        "&:hover": {
+          transform: "translateY(-4px)",
+          boxShadow: 4,
+        },
+        transition: "all 0.2s",
+      }}
+    >
       {/* Área clicável apenas na imagem */}
-      <Box 
+      <Box
         onClick={handleCardClick}
-        style={{ 
-          cursor: 'pointer',
-          display: 'flex',
-          justifyContent: 'center',
-          padding: '20px'
+        style={{
+          cursor: "pointer",
+          display: "flex",
+          justifyContent: "center",
+          padding: "20px",
         }}
       >
-        <Avatar 
+        <Avatar
           src={user.avatar ? getImageUrl(user.avatar) || undefined : undefined}
-          sx={{ 
+          sx={{
             width: 120,
             height: 120,
             border: 3,
-            ...getPlanStyle(user.plan?.type)
+            ...getPlanStyle(user.plan?.type),
           }}
         >
           {!user.avatar ? user.username.slice(0, 2).toUpperCase() : null}
@@ -202,52 +220,64 @@ export function UserCard({
       </Box>
 
       {/* Área de informações não clicável */}
-      <CardContent sx={{ 
-        height: '240px',
-        p: 2,
-        '&:last-child': { pb: 2 },
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
+      <CardContent
+        sx={{
+          height: "240px",
+          p: 2,
+          "&:last-child": { pb: 2 },
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         {/* Área de conteúdo principal */}
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 2,
-          flex: 1,
-          minHeight: 0 // Importante para o flex funcionar corretamente
-        }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 2,
+            flex: 1,
+            minHeight: 0, // Importante para o flex funcionar corretamente
+          }}
+        >
           {/* Informações do usuário */}
-          <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 1
-          }}>
-            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: "bold" }}>
               {user.username}
             </Typography>
 
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              gap: 4
-            }}>
-              <Box sx={{ textAlign: 'center' }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 4,
+              }}
+            >
+              <Box sx={{ textAlign: "center" }}>
                 <Typography variant="body2" color="text.secondary">
                   Seguidores
                 </Typography>
                 <Typography variant="body1" fontWeight="bold">
-                  {Array.isArray(user.followers) ? user.followers.length : user.followers}
+                  {Array.isArray(user.followers)
+                    ? user.followers.length
+                    : user.followers}
                 </Typography>
               </Box>
-              <Box sx={{ textAlign: 'center' }}>
+              <Box sx={{ textAlign: "center" }}>
                 <Typography variant="body2" color="text.secondary">
                   Seguindo
                 </Typography>
                 <Typography variant="body1" fontWeight="bold">
-                  {Array.isArray(user.following) ? user.following.length : user.following}
+                  {Array.isArray(user.following)
+                    ? user.following.length
+                    : user.following}
                 </Typography>
               </Box>
             </Box>
@@ -255,25 +285,32 @@ export function UserCard({
 
           {/* Texto de tempo - agora no meio */}
           {user.createdAt && (
-            <Typography variant="caption" color="text.secondary" align="center">
-              {user.friendshipStatus === 'FRIENDLY' 
-                ? 'Amigos desde ' 
-                : user.isRequester 
-                  ? 'Solicitação enviada em ' 
-                  : 'Solicitação recebida em '}
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              align="center"
+              className="whitespace-nowrap text-[11px]"
+            >
+              {user.friendshipStatus === "FRIENDLY"
+                ? "Amigos desde "
+                : user.isRequester
+                ? "Solicitação enviada em "
+                : "Solicitação recebida em "}
               {format(new Date(user.createdAt), "dd 'de' MMMM 'de' yyyy")}
             </Typography>
           )}
         </Box>
 
         {/* Área de botões - sempre no final */}
-        <Box sx={{ 
-          mt: 'auto',
-          pt: 2,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 1
-        }}>
+        <Box
+          sx={{
+            mt: "auto",
+            pt: 2,
+            display: "flex",
+            flexDirection: "column",
+            gap: 1,
+          }}
+        >
           {shouldShowFriendshipButton() && (
             <FriendshipButton
               status={friendshipStatus}
@@ -284,8 +321,8 @@ export function UserCard({
               isRecipient={user.isRecipient}
             />
           )}
-          
-          {friendshipStatus === 'FRIENDLY' && (
+
+          {friendshipStatus === "FRIENDLY" && (
             <Button
               onClick={handleOpenChat}
               size="small"
@@ -298,16 +335,16 @@ export function UserCard({
             </Button>
           )}
 
-          {friendshipStatus === 'PENDING' && (
-            <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
+          {friendshipStatus === "PENDING" && (
+            <Box sx={{ display: "flex", gap: 1, width: "100%" }}>
               {user.isRequester && (
                 <Button
                   variant="outlined"
                   color="error"
                   fullWidth
                   onClick={(e) => {
-                    e.stopPropagation()
-                    onFriendshipAction?.('cancel', friendshipId ?? undefined)
+                    e.stopPropagation();
+                    onFriendshipAction?.("cancel", friendshipId ?? undefined);
                   }}
                 >
                   Cancelar solicitação
@@ -320,8 +357,8 @@ export function UserCard({
                     color="primary"
                     fullWidth
                     onClick={(e) => {
-                      e.stopPropagation()
-                      onFriendshipAction?.('accept', friendshipId ?? undefined)
+                      e.stopPropagation();
+                      onFriendshipAction?.("accept", friendshipId ?? undefined);
                     }}
                   >
                     Aceitar
@@ -331,8 +368,8 @@ export function UserCard({
                     color="error"
                     fullWidth
                     onClick={(e) => {
-                      e.stopPropagation()
-                      onFriendshipAction?.('reject', friendshipId ?? undefined)
+                      e.stopPropagation();
+                      onFriendshipAction?.("reject", friendshipId ?? undefined);
                     }}
                   >
                     Recusar
@@ -344,5 +381,5 @@ export function UserCard({
         </Box>
       </CardContent>
     </Card>
-  )
-} 
+  );
+}
