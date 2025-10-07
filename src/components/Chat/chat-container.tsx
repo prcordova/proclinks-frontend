@@ -22,7 +22,6 @@ export function ChatContainer() {
         <ChatWindow
           key={chat.userId}
           username={chat.username}
-          avatar={chat.avatar}
           isMinimized={chat.isMinimized}
           messages={chat.messages}
           friendshipStatus={chat.friendshipStatus}
