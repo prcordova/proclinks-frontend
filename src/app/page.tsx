@@ -53,14 +53,14 @@ export default function Home() {
             Tudo que você precisa para sua presença digital
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-            <div className="text-center p-4">
-              <div className="bg-primary/10 rounded-2xl p-4 mb-4 h-40 md:h-48 lg:h-64 flex items-center justify-center overflow-hidden">
+            <div className="text-center p-4 flex flex-col h-full">
+              <div className="bg-primary/10 rounded-2xl p-4 mb-4 aspect-square flex items-center justify-center overflow-hidden">
                 <Image 
-                  src="/assets/imgs/colors.png" 
+                  src="/assets/imgs/img1.jpg" 
                   alt="Personalização" 
                   width={200} 
                   height={200}
-                  className="w-auto h-full object-contain rounded-xl"
+                  className="w-full h-full object-cover rounded-xl"
                 />
               </div>
               <h3 className="text-lg md:text-xl font-semibold mb-2">Design Personalizado</h3>
@@ -68,33 +68,35 @@ export default function Home() {
                 Customize cores, fontes e layouts para combinar com sua marca
               </p>
             </div>
-            <div className="text-center">
-              <div className="bg-primary/10 rounded-2xl p-4 mb-4 h-48 md:h-64 flex items-center justify-center overflow-hidden">
+
+            <div className="text-center p-4 flex flex-col h-full">
+              <div className="bg-primary/10 rounded-2xl p-4 mb-4 aspect-square flex items-center justify-center overflow-hidden">
                 <Image 
-                  src="/assets/imgs/colors.png" 
+                  src="/assets/imgs/img2.jpg" 
                   alt="Analytics" 
                   width={200} 
                   height={200}
-                  className="w-auto h-full object-contain rounded-xl"
+                  className="w-full h-full object-cover rounded-xl"
                 />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Analytics Detalhado</h3>
-              <p className="text-gray-600">
+              <h3 className="text-lg md:text-xl font-semibold mb-2">Analytics Detalhado</h3>
+              <p className="text-sm md:text-base text-gray-600">
                 Acompanhe visitas, cliques e interações em tempo real
               </p>
             </div>
-            <div className="text-center">
-              <div className="bg-primary/10 rounded-2xl p-4 mb-4 h-48 md:h-64 flex items-center justify-center overflow-hidden">
+
+            <div className="text-center p-4 flex flex-col h-full">
+              <div className="bg-primary/10 rounded-2xl p-4 mb-4 aspect-square flex items-center justify-center overflow-hidden">
                 <Image 
-                  src="/assets/imgs/colors.png" 
+                  src="/assets/imgs/img3.jpg" 
                   alt="Social" 
                   width={200} 
                   height={200}
-                  className="w-auto h-full object-contain rounded-xl"
+                  className="w-full h-full object-cover rounded-xl"
                 />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Feed Social</h3>
-              <p className="text-gray-600">
+              <h3 className="text-lg md:text-xl font-semibold mb-2">Feed Social</h3>
+              <p className="text-sm md:text-base text-gray-600">
                 Conecte-se com outros criadores e aumente sua rede
               </p>
             </div>
@@ -114,21 +116,21 @@ export default function Home() {
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-center">
-            <div className="p-4">
+            <div className="p-4 flex flex-col items-center justify-center">
               <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-primary mb-2">10K+</h3>
               <p className="text-sm md:text-base text-gray-600">Usuários ativos</p>
             </div>
-            <div>
-              <h3 className="text-4xl font-bold text-primary mb-2">1M+</h3>
-              <p className="text-gray-600">Links compartilhados</p>
+            <div className="p-4 flex flex-col items-center justify-center">
+              <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-primary mb-2">1M+</h3>
+              <p className="text-sm md:text-base text-gray-600">Links compartilhados</p>
             </div>
-            <div>
-              <h3 className="text-4xl font-bold text-primary mb-2">5M+</h3>
-              <p className="text-gray-600">Visitas mensais</p>
+            <div className="p-4 flex flex-col items-center justify-center">
+              <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-primary mb-2">5M+</h3>
+              <p className="text-sm md:text-base text-gray-600">Visitas mensais</p>
             </div>
-            <div>
-              <h3 className="text-4xl font-bold text-primary mb-2">98%</h3>
-              <p className="text-gray-600">Satisfação</p>
+            <div className="p-4 flex flex-col items-center justify-center">
+              <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-primary mb-2">98%</h3>
+              <p className="text-sm md:text-base text-gray-600">Satisfação</p>
             </div>
           </div>
         </div>

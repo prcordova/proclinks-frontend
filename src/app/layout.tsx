@@ -4,6 +4,8 @@ import "./globals.css";
 import { RootLayoutClient } from "@/components/root-layout-client";
 import { AuthProvider } from '@/contexts/auth-context'
 import { LoadingProvider } from '@/contexts/loading-context'
+import { ChatProvider } from '@/contexts/chat-context'
+import { ChatContainer } from '@/components/Chat/chat-container'
 import { Header } from '@/components/header'
 import { ThemeProvider } from '@/contexts/theme-context'
 import { Footer } from '@/components/footer'
@@ -30,15 +32,18 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <LoadingProvider>
-              <Header />
-              <main>
-                <RootLayoutClient>
-                  {children}
-                  <Analytics />
-                </RootLayoutClient>
-              </main>
-              <Footer />
-              <Toaster />
+              <ChatProvider>
+                <Header />
+                <main>
+                  <RootLayoutClient>
+                    {children}
+                    <Analytics />
+                  </RootLayoutClient>
+                </main>
+                <Footer />
+                <ChatContainer />
+                <Toaster />
+              </ChatProvider>
             </LoadingProvider>
           </AuthProvider>
         </ThemeProvider>

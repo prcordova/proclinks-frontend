@@ -101,7 +101,7 @@ export function Appearance({
           gap: 2
         }}>
           <PlanLocker
-            requiredPlan="GOLD"
+            requiredPlan="BRONZE"
             currentPlan={user?.plan?.type}
           >
             <ColorPickerField
@@ -130,6 +130,7 @@ export function Appearance({
             currentPlan={user?.plan?.type}
           >
             <ColorPickerField
+             
               label="Cor do Texto"
               value={settings.textColor}
               onChange={(color) => handleChange('textColor', color)}
